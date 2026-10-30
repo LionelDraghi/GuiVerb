@@ -1,7 +1,21 @@
-# F030 — Text fields and focus
+# F030 — Text fields and focus <!-- omit from toc -->
 
 Source: `examples/reference-scenarios.md` (continue to login, validation failure)
 Milestone: 1 — minimal loop (Web)
+
+## Contents <!-- omit from toc -->
+- [Need](#need)
+- [Intended outcome](#intended-outcome)
+- [Vocabulary introduced](#vocabulary-introduced)
+- [ARIA grounding](#aria-grounding)
+- [References](#references)
+- [Acceptance criteria](#acceptance-criteria)
+- [Executable scenarios](#executable-scenarios)
+  - [Scenario: login fields](#scenario-login-fields)
+- [Verification beyond bbt](#verification-beyond-bbt)
+- [Design implications](#design-implications)
+- [Open questions](#open-questions)
+- [Finalization target](#finalization-target)
 
 ## Need
 

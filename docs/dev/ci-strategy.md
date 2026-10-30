@@ -1,4 +1,18 @@
-# CI Strategy for GUI Backends
+# CI Strategy for GUI Backends <!-- omit from toc -->
+
+## Contents <!-- omit from toc -->
+
+- [Principle](#principle)
+- [Web](#web)
+- [Linux / GTK / AT-SPI](#linux--gtk--at-spi)
+- [Windows](#windows)
+- [macOS / Darwin](#macos--darwin)
+- [Proposed CI tiers](#proposed-ci-tiers)
+  - [Tier 1: every pull request](#tier-1-every-pull-request)
+  - [Tier 2: platform smoke matrix](#tier-2-platform-smoke-matrix)
+  - [Tier 3: authoritative native E2E](#tier-3-authoritative-native-e2e)
+- [Backend conformance consequence](#backend-conformance-consequence)
+- [Open validation tasks](#open-validation-tasks)
 
 ## Principle
 

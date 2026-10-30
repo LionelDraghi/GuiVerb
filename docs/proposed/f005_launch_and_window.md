@@ -1,7 +1,22 @@
-# F005 — Launch and window observation
+# F005 — Launch and window observation <!-- omit from toc -->
 
 Source: `examples/reference-scenarios.md` (welcome interface); roadmap phase 2
 Milestone: 1 — minimal loop (Web)
+
+## Contents <!-- omit from toc -->
+- [Need](#need)
+- [Intended outcome](#intended-outcome)
+- [Vocabulary introduced](#vocabulary-introduced)
+- [ARIA grounding](#aria-grounding)
+- [References](#references)
+- [Acceptance criteria](#acceptance-criteria)
+- [Executable scenarios](#executable-scenarios)
+  - [Scenario: launch](#scenario-launch)
+- [Verification beyond bbt](#verification-beyond-bbt)
+- [Design implications](#design-implications)
+- [Open questions](#open-questions)
+- [Finalization target](#finalization-target)
+
 
 ## Need
 
@@ -44,7 +59,7 @@ Not executable yet: the GuiVerb runner does not exist. Target syntax:
 
 ### Scenario: launch
 
-- When I run `witness-web`
+- When I run `witness_web`
 - Then a window appears
 
 ## Verification beyond bbt

@@ -1,4 +1,4 @@
-# GuiVerb
+# GuiVerb <!-- omit from toc -->
 
 **Behaviour-Driven GUI Design**
 
@@ -11,6 +11,13 @@ GuiVerb turns readable GUI behaviour into executable, platform-independent docum
 - When I press the button `Continue`
 - Then a login dialog appears
 ```
+
+## Contents <!-- omit from toc -->
+- [Goals](#goals)
+- [Relationship with `bbt`](#relationship-with-bbt)
+- [Pilot targets](#pilot-targets)
+- [Documentation](#documentation)
+- [Status](#status)
 
 ## Goals
 

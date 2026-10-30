@@ -1,4 +1,14 @@
-# GuiVerb Manifesto
+# GuiVerb Manifesto <!-- omit from toc -->
+
+## Contents <!-- omit from toc -->
+
+- [Purpose](#purpose)
+- [Relationship with `bbt`](#relationship-with-bbt)
+- [Principles](#principles)
+- [Behaviour vocabulary](#behaviour-vocabulary)
+- [Architecture direction](#architecture-direction)
+- [Pilot targets](#pilot-targets)
+- [References](#references)
 
 ## Purpose
 

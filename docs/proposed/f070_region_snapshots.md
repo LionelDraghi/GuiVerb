@@ -1,8 +1,22 @@
-# F070 — Region snapshots and visual assertions
+# F070 — Region snapshots and visual assertions <!-- omit from toc -->
 
 Source: `docs/proposed/candidate-features.md` (chess snapshots, comparison
         policies)
 Milestone: 3 — beyond the reference scenarios (gated)
+
+## Contents <!-- omit from toc -->
+- [Need](#need)
+- [Intended outcome](#intended-outcome)
+- [Vocabulary introduced](#vocabulary-introduced)
+- [ARIA grounding](#aria-grounding)
+- [References](#references)
+- [Acceptance criteria](#acceptance-criteria)
+- [Executable scenarios](#executable-scenarios)
+- [Verification beyond bbt](#verification-beyond-bbt)
+- [Design implications](#design-implications)
+- [Open questions](#open-questions)
+- [Finalization target](#finalization-target)
+- [Gate](#gate)
 
 ## Need
 

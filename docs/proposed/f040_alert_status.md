@@ -1,7 +1,22 @@
-# F040 — Alerts and status messages
+# F040 — Alerts and status messages <!-- omit from toc -->
 
 Source: `examples/reference-scenarios.md` (validation failure, asynchronous refresh)
 Milestone: 1 — minimal loop (Web)
+
+## Contents <!-- omit from toc -->
+- [Need](#need)
+- [Intended outcome](#intended-outcome)
+- [Vocabulary introduced](#vocabulary-introduced)
+- [ARIA grounding](#aria-grounding)
+- [References](#references)
+- [Acceptance criteria](#acceptance-criteria)
+- [Executable scenarios](#executable-scenarios)
+  - [Scenario: validation failure](#scenario-validation-failure)
+  - [Scenario: asynchronous refresh](#scenario-asynchronous-refresh)
+- [Verification beyond bbt](#verification-beyond-bbt)
+- [Design implications](#design-implications)
+- [Open questions](#open-questions)
+- [Finalization target](#finalization-target)
 
 ## Need
 

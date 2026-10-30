@@ -1,7 +1,21 @@
-# F010 — Text content of a window
+# F010 — Text content of a window <!-- omit from toc -->
 
 Source: `examples/reference-scenarios.md` (welcome interface)
 Milestone: 1 — minimal loop (Web)
+
+## Contents <!-- omit from toc -->
+- [Need](#need)
+- [Intended outcome](#intended-outcome)
+- [Vocabulary introduced](#vocabulary-introduced)
+- [ARIA grounding](#aria-grounding)
+- [References](#references)
+- [Acceptance criteria](#acceptance-criteria)
+- [Executable scenarios](#executable-scenarios)
+  - [Scenario: welcome text](#scenario-welcome-text)
+- [Verification beyond bbt](#verification-beyond-bbt)
+- [Design implications](#design-implications)
+- [Open questions](#open-questions)
+- [Finalization target](#finalization-target)
 
 ## Need
 
@@ -38,7 +52,7 @@ document subtree; no DOM or CSS concept leaks into the scenario.
 
 ### Scenario: welcome text
 
-- When I run `witness-web`
+- When I run `witness_web`
 - Then a window appears
 - And the window contains `Hello World`
 

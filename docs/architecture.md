@@ -1,4 +1,15 @@
-# Architecture
+# Architecture <!-- omit from toc -->
+
+## Contents <!-- omit from toc -->
+
+- [Project boundary with `bbt`](#project-boundary-with-bbt)
+- [Core boundary](#core-boundary)
+- [Canonical semantic object](#canonical-semantic-object)
+- [Observation and action](#observation-and-action)
+- [Logical backend contract](#logical-backend-contract)
+- [Object resolution](#object-resolution)
+- [Temporal semantics](#temporal-semantics)
+- [Protocol frontier](#protocol-frontier)
 
 ## Project boundary with `bbt`
 

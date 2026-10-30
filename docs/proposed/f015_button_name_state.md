@@ -1,7 +1,21 @@
-# F015 — Button by accessible name, with enabled state
+# F015 — Button by accessible name, with enabled state <!-- omit from toc -->
 
 Source: `examples/reference-scenarios.md` (welcome interface)
 Milestone: 1 — minimal loop (Web)
+
+## Contents <!-- omit from toc -->
+- [Need](#need)
+- [Intended outcome](#intended-outcome)
+- [Vocabulary introduced](#vocabulary-introduced)
+- [ARIA grounding](#aria-grounding)
+- [References](#references)
+- [Acceptance criteria](#acceptance-criteria)
+- [Executable scenarios](#executable-scenarios)
+  - [Scenario: welcome button](#scenario-welcome-button)
+- [Verification beyond bbt](#verification-beyond-bbt)
+- [Design implications](#design-implications)
+- [Open questions](#open-questions)
+- [Finalization target](#finalization-target)
 
 ## Need
 
@@ -42,7 +56,7 @@ and that it is enabled or disabled.
 
 ### Scenario: welcome button
 
-- When I run `witness-web`
+- When I run `witness_web`
 - Then a window appears
 - And there is a button named `Continue`
 - And the `Continue` button is enabled

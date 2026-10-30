@@ -1,8 +1,15 @@
-# Proposed Features
+# Proposed Features <!-- omit from toc -->
 
 This document is a lightweight inbox for candidate scenarios and feature ideas. Content here is exploratory: wording, semantics, and MVP inclusion are not yet decisions.
 
 All scenario parameters follow `bbt` syntax: inline values are enclosed in backticks, while multiline text uses fenced code blocks.
+
+## Contents <!-- omit from toc -->
+
+- [Calculator](#calculator)
+- [Chess](#chess)
+- [TopoProof](#topoproof)
+- [Cross-cutting feature candidates](#cross-cutting-feature-candidates)
 
 ## Calculator
 

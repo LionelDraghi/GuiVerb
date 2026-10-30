@@ -1,9 +1,22 @@
-# F075 — Action provenance
+# F075 — Action provenance <!-- omit from toc -->
 
 Source: `docs/proposed/candidate-features.md` (cross-cutting: record whether
         an action was performed through system input, toolkit input,
         semantic action, or direct manipulation); `docs/dev/ci-strategy.md`
 Milestone: 3 — beyond the reference scenarios
+
+## Contents <!-- omit from toc -->
+- [Need](#need)
+- [Intended outcome](#intended-outcome)
+- [Vocabulary introduced](#vocabulary-introduced)
+- [ARIA grounding](#aria-grounding)
+- [References](#references)
+- [Acceptance criteria](#acceptance-criteria)
+- [Executable scenarios](#executable-scenarios)
+- [Verification beyond bbt](#verification-beyond-bbt)
+- [Design implications](#design-implications)
+- [Open questions](#open-questions)
+- [Finalization target](#finalization-target)
 
 ## Need
 

@@ -1,4 +1,4 @@
-# Concerns
+# Concerns <!-- omit from toc -->
 
 This is a lightweight index, not a duplicate issue tracker. Each row
 supplies an identifier, a priority, a short label, a kind, a status,

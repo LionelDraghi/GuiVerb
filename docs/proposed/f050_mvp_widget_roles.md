@@ -1,8 +1,20 @@
-# F050 — MVP widget role set
+# F050 — MVP widget role set <!-- omit from toc -->
 
 Source: ARIA 1.2 widget role taxonomy; roadmap phase 1 ("freeze the MVP
         vocabulary subset")
 Milestone: 2 — wider ARIA vocabulary (Web)
+
+## Contents <!-- omit from toc -->
+- [Need](#need)
+- [Intended outcome](#intended-outcome)
+- [Proposed MVP set](#proposed-mvp-set)
+- [References](#references)
+- [Acceptance criteria](#acceptance-criteria)
+- [Executable scenarios](#executable-scenarios)
+- [Verification beyond bbt](#verification-beyond-bbt)
+- [Design implications](#design-implications)
+- [Open questions](#open-questions)
+- [Finalization target](#finalization-target)
 
 ## Need
 

@@ -1,4 +1,4 @@
-# Roadmap
+# Roadmap <!-- omit from toc -->
 
 This is a lightweight index of intentional future development. Details
 remain in the development plan below and in the linked documents.
@@ -16,6 +16,20 @@ remain in the development plan below and in the linked documents.
 
 Priority concerns are considered before roadmap additions when choosing
 new work, unless the user chooses otherwise.
+
+## Contents <!-- omit from toc -->
+
+- [Feature plan](#feature-plan)
+- [Development plan](#development-plan)
+  - [Phase 0: Reference behaviour](#phase-0-reference-behaviour)
+  - [Phase 0A: Project separation from `bbt`](#phase-0a-project-separation-from-bbt)
+  - [Phase 1: Canonical model and logical protocol](#phase-1-canonical-model-and-logical-protocol)
+  - [Phase 2: Web reference backend](#phase-2-web-reference-backend)
+  - [Phase 3: GTK / AT-SPI backend](#phase-3-gtk--at-spi-backend)
+  - [Phase 4: Adi2 probe](#phase-4-adi2-probe)
+  - [Phase 5: raygui feasibility spike](#phase-5-raygui-feasibility-spike)
+  - [Phase 6: Consolidation](#phase-6-consolidation)
+- [Immediate backlog](#immediate-backlog)
 
 ## Feature plan
 

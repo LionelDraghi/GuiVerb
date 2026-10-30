@@ -1,7 +1,21 @@
-# F065 — Semantic drag-and-drop
+# F065 — Semantic drag-and-drop <!-- omit from toc -->
 
 Source: `docs/proposed/candidate-features.md` (chess, TopoProof)
 Milestone: 3 — beyond the reference scenarios
+
+## Contents <!-- omit from toc -->
+- [Need](#need)
+- [Intended outcome](#intended-outcome)
+- [Vocabulary introduced](#vocabulary-introduced)
+- [ARIA grounding](#aria-grounding)
+- [References](#references)
+- [Acceptance criteria](#acceptance-criteria)
+- [Executable scenarios](#executable-scenarios)
+  - [Scenario: chess move (candidate)](#scenario-chess-move-candidate)
+- [Verification beyond bbt](#verification-beyond-bbt)
+- [Design implications](#design-implications)
+- [Open questions](#open-questions)
+- [Finalization target](#finalization-target)
 
 ## Need
 

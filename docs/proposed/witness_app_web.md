@@ -1,8 +1,19 @@
-# Witness web application
+# Witness web application <!-- omit from toc -->
 
 Source: roadmap phase 0 (reference application) and phase 2 (Web backend);
         `examples/reference-scenarios.md`
 Milestone: 1 — minimal loop (Web)
+
+## Contents <!-- omit from toc -->
+- [Need](#need)
+- [Intended outcome](#intended-outcome)
+- [Acceptance criteria](#acceptance-criteria)
+- [Scope](#scope)
+- [Non-goals](#non-goals)
+- [Verification beyond bbt](#verification-beyond-bbt)
+- [Design implications](#design-implications)
+- [Open questions](#open-questions)
+- [Finalization target](#finalization-target)
 
 ## Need
 

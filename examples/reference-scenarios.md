@@ -1,4 +1,11 @@
-# Reference GUI Scenarios
+# Reference GUI Scenarios <!-- omit from toc -->
+
+## Contents <!-- omit from toc -->
+
+- [Scenario: welcome interface](#scenario-welcome-interface)
+- [Scenario: continue to login](#scenario-continue-to-login)
+- [Scenario: validation failure](#scenario-validation-failure)
+- [Scenario: asynchronous refresh](#scenario-asynchronous-refresh)
 
 ## Scenario: welcome interface
 

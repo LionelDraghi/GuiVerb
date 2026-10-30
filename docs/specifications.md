@@ -1,8 +1,17 @@
-# GuiVerb specifications
+# GuiVerb specifications <!-- omit from toc -->
 
 This document holds the project's cross-feature specifications and the
 index of the feature pages. The feature pages own every detail; this
 index may summarise, never duplicate.
+
+## Contents <!-- omit from toc -->
+
+- [1. Feature index](#1-feature-index)
+- [2. Cross-feature specifications](#2-cross-feature-specifications)
+  - [\[S001\] Scenario vocabulary independence](#s001-scenario-vocabulary-independence)
+  - [\[S002\] Executable documentation](#s002-executable-documentation)
+  - [\[S003\] Semantic anchoring of visual assertions](#s003-semantic-anchoring-of-visual-assertions)
+  - [\[S004\] Test plans follow the ARIA-AT structure](#s004-test-plans-follow-the-aria-at-structure)
 
 ## 1. Feature index
 

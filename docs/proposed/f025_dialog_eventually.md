@@ -1,7 +1,21 @@
-# F025 — Dialog appearance, with bounded waiting
+# F025 — Dialog appearance, with bounded waiting <!-- omit from toc -->
 
 Source: `examples/reference-scenarios.md` (continue to login)
 Milestone: 1 — minimal loop (Web)
+
+## Contents <!-- omit from toc -->
+- [Need](#need)
+- [Intended outcome](#intended-outcome)
+- [Vocabulary introduced](#vocabulary-introduced)
+- [ARIA grounding](#aria-grounding)
+- [References](#references)
+- [Acceptance criteria](#acceptance-criteria)
+- [Executable scenarios](#executable-scenarios)
+  - [Scenario: continue to login](#scenario-continue-to-login)
+- [Verification beyond bbt](#verification-beyond-bbt)
+- [Design implications](#design-implications)
+- [Open questions](#open-questions)
+- [Finalization target](#finalization-target)
 
 ## Need
 

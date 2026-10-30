@@ -1,7 +1,21 @@
-# F055 — Structure roles and landmarks
+# F055 — Structure roles and landmarks <!-- omit from toc -->
 
 Source: ARIA 1.2 document structure and landmark taxonomies
 Milestone: 2 — wider ARIA vocabulary (Web)
+
+## Contents <!-- omit from toc -->
+- [Need](#need)
+- [Intended outcome](#intended-outcome)
+- [Vocabulary introduced](#vocabulary-introduced)
+- [ARIA grounding](#aria-grounding)
+- [References](#references)
+- [Acceptance criteria](#acceptance-criteria)
+- [Executable scenarios](#executable-scenarios)
+  - [Scenario: scoped lookup](#scenario-scoped-lookup)
+- [Verification beyond bbt](#verification-beyond-bbt)
+- [Design implications](#design-implications)
+- [Open questions](#open-questions)
+- [Finalization target](#finalization-target)
 
 ## Need
 

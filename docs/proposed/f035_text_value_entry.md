@@ -1,8 +1,22 @@
-# F035 — Text and value entry
+# F035 — Text and value entry <!-- omit from toc -->
 
 Source: `docs/proposed/candidate-features.md` (calculator: semantic numeric
         entry); ARIA 1.2 value roles
 Milestone: 1 — minimal loop (Web)
+
+## Contents <!-- omit from toc -->
+- [Need](#need)
+- [Intended outcome](#intended-outcome)
+- [Vocabulary introduced](#vocabulary-introduced)
+- [ARIA grounding](#aria-grounding)
+- [References](#references)
+- [Acceptance criteria](#acceptance-criteria)
+- [Executable scenarios](#executable-scenarios)
+  - [Scenario: calculator entry (candidate, to settle)](#scenario-calculator-entry-candidate-to-settle)
+- [Verification beyond bbt](#verification-beyond-bbt)
+- [Design implications](#design-implications)
+- [Open questions](#open-questions)
+- [Finalization target](#finalization-target)
 
 ## Need
 

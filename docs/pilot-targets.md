@@ -1,4 +1,13 @@
-# Pilot Targets
+# Pilot Targets <!-- omit from toc -->
+
+## Contents <!-- omit from toc -->
+
+- [Matrix](#matrix)
+- [Web](#web)
+- [GTK / AT-SPI](#gtk--at-spi)
+- [Adi2](#adi2)
+- [raygui](#raygui)
+- [MVP gate](#mvp-gate)
 
 ## Matrix
 

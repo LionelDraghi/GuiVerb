@@ -1,7 +1,21 @@
-# F045 — Widget states
+# F045 — Widget states <!-- omit from toc -->
 
 Source: ARIA 1.2 states and properties; roadmap phase 1
 Milestone: 2 — wider ARIA vocabulary (Web)
+
+## Contents <!-- omit from toc -->
+- [Need](#need)
+- [Intended outcome](#intended-outcome)
+- [Vocabulary introduced](#vocabulary-introduced)
+- [ARIA grounding](#aria-grounding)
+- [References](#references)
+- [Acceptance criteria](#acceptance-criteria)
+- [Executable scenarios](#executable-scenarios)
+  - [Scenario: disclosure state](#scenario-disclosure-state)
+- [Verification beyond bbt](#verification-beyond-bbt)
+- [Design implications](#design-implications)
+- [Open questions](#open-questions)
+- [Finalization target](#finalization-target)
 
 ## Need
 

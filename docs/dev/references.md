@@ -1,7 +1,11 @@
-# References
+# References <!-- omit from toc -->
 
 External work this project builds on. One entry per source, with what
 GuiVerb takes from it; the details live in the linked documents.
+
+## Contents <!-- omit from toc -->
+- [Methodological base](#methodological-base)
+- [Normative and grounding references](#normative-and-grounding-references)
 
 ## Methodological base
 
