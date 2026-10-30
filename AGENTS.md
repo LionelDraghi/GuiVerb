@@ -1,4 +1,4 @@
-# Instructions for coding agents
+# Instructions for coding agents <!-- omit from toc -->
 
 This file is the entry point for coding agents working on GuiVerb.
 
@@ -13,6 +13,14 @@ explicit, post-review consent; never modify a golden file, `expected_*`,
 without the owner's agreement), procedure choice, reference policy,
 skills, Ada tooling (Serena MCP first). This file keeps only what is
 specific to GuiVerb.
+
+## Contents <!-- omit from toc -->
+
+- [Project identity](#project-identity)
+- [Enabled capabilities](#enabled-capabilities)
+- [Project commands](#project-commands)
+- [Project-specific paths or release parameters](#project-specific-paths-or-release-parameters)
+- [Exceptions](#exceptions)
 
 ## Project identity
 
@@ -50,6 +58,12 @@ not invent implementation beyond the current phase (see
 - Quick validation: `make check`
 - Full validation: `make check` (single suite for now)
 - Generate reports: N/A
+
+The Web backend needs `chromedriver` on PATH, with a major version
+matching the installed Chromium (see
+`docs/dev/design_discussions.md`, "Web driver for the minimal loop").
+Set `GUIVERB_HEADED` (any value) to run the browser visibly instead
+of headless; scenarios must not depend on it.
 
 ## Project-specific paths or release parameters
 

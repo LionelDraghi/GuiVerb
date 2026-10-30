@@ -2,3 +2,6 @@
 /bin/
 /alire/
 /config/
+*.md.out
+*.md.err
+tests/run/

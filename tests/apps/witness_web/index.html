@@ -1,0 +1,41 @@
+<!--
+  GuiVerb (https://github.com/LionelDraghi/GuiVerb)
+  SPDX-License-Identifier: Apache-2.0
+  SPDX-FileCopyrightText: 2026, Lionel Draghi
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>GuiVerb witness</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="welcome">
+    <h1>Hello World</h1>
+    <button type="button" id="continue">Continue</button>
+    <button type="button" id="refresh">Refresh</button>
+    <p id="status" role="status" hidden></p>
+  </main>
+
+  <dialog id="login-dialog" aria-labelledby="login-title">
+    <form method="dialog" id="login-form" novalidate>
+      <h2 id="login-title">Log in</h2>
+      <p>
+        <label for="user">User</label>
+        <input type="text" id="user" name="user" autocomplete="username">
+      </p>
+      <p>
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password"
+               autocomplete="current-password">
+      </p>
+      <p id="login-alert" role="alert" hidden>User is required</p>
+      <button type="submit" id="login">Login</button>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

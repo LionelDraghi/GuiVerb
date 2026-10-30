@@ -1,0 +1,19 @@
+/*
+ * GuiVerb (https://github.com/LionelDraghi/GuiVerb)
+ * SPDX-License-Identifier: Apache-2.0
+ * SPDX-FileCopyrightText: 2026, Lionel Draghi
+ */
+
+body {
+  font-family: system-ui, sans-serif;
+  margin: 2rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+#login-alert {
+  color: #b00020;
+}
