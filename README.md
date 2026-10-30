@@ -43,9 +43,9 @@ GuiVerb experimentation must not impose GUI dependencies, protocol complexity, r
 - [Manifesto](docs/manifesto.md)
 - [Architecture](docs/architecture.md)
 - [Pilot targets](docs/pilot-targets.md)
-- [Proposed features](docs/proposed_features.md)
-- [Development plan](docs/dev/development-plan.md)
-- [Open questions](docs/dev/open-questions.md)
+- [Proposed features](docs/proposed/candidate-features.md)
+- [Roadmap](docs/roadmap.md)
+- [Concerns and open questions](docs/dev/concerns.md)
 - [CI strategy](docs/dev/ci-strategy.md)
 - [Reference scenarios](examples/reference-scenarios.md)
 

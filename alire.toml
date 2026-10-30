@@ -1,0 +1,19 @@
+name = "guiverb"
+description = "Behaviour-driven GUI design: executable GUI scenarios"
+version = "0.1.0-dev"
+
+authors = ["Lionel Draghi"]
+maintainers = ["Lionel Draghi <lionel.draghi@free.fr>"]
+maintainers-logins = ["LionelDraghi"]
+licenses = "Apache-2.0"
+website = "https://github.com/LionelDraghi/GuiVerb"
+tags = ["gui", "testing", "bdd", "accessibility"]
+
+executables = ["guiverb"]
+
+[build-profiles]
+guiverb = "validation"
+
+[[actions]]
+type = "test"
+command = ["make", "check"]
