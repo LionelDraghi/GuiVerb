@@ -5,6 +5,7 @@
 --  ---------------------------------------------------------------------------
 
 with Ada.Directories;
+with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Text_IO;
 
@@ -79,6 +80,20 @@ package body Guiverb_Scenario is
                      end if;
                      Result.Has_Window := True;
                      Result.Window_Name := To_Unbounded_String (Name);
+                  end;
+               elsif Ada.Strings.Fixed.Index (Line, "the window contains") > 0
+               then
+                  declare
+                     Text : constant String := Backticked (Line);
+                  begin
+                     if Text = "" then
+                        raise Parse_Error
+                        with "window text step without text: " & Line;
+                     elsif Result.Window_Text /= Null_Unbounded_String then
+                        raise Parse_Error
+                        with "two window text steps in one scenario";
+                     end if;
+                     Result.Window_Text := To_Unbounded_String (Text);
                   end;
                else
                   if Line'Length >= 2

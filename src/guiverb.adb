@@ -37,7 +37,9 @@ procedure Guiverb is
          end;
          declare
             Parent : constant String :=
-              Ada.Directories.Containing_Directory (To_String (Dir));
+              (if To_String (Dir) = "/"
+               then To_String (Dir)
+               else Ada.Directories.Containing_Directory (To_String (Dir)));
          begin
             exit when Parent = To_String (Dir);
             Dir := To_Unbounded_String (Parent);
@@ -191,19 +193,51 @@ begin
             declare
                Actual_Title : constant String :=
                  Guiverb_WebDriver.Title (Session_Id);
-               Mismatch : constant Boolean :=
+               Title_Failed : constant Boolean :=
                  To_String (Info.Window_Name) /= ""
                  and then Actual_Title /= To_String (Info.Window_Name);
+               Expected_Text : constant String :=
+                 To_String (Info.Window_Text);
+               Actual_Text : Unbounded_String := Null_Unbounded_String;
+               Text_Failed : Boolean := False;
+
+               function Preview (Text : String) return String is
+                  Max : constant := 200;
+               begin
+                  if Text'Length <= Max then
+                     return Text;
+                  else
+                     return Text (Text'First .. Text'First + Max - 1)
+                       & "...";
+                  end if;
+               end Preview;
             begin
-               if Mismatch then
+               if not Title_Failed and then Expected_Text /= "" then
+                  Actual_Text := To_Unbounded_String
+                    (Guiverb_WebDriver.Text (Session_Id));
+                  Text_Failed := Ada.Strings.Fixed.Index
+                    (To_String (Actual_Text), Expected_Text) = 0;
+               end if;
+
+               if Title_Failed then
                   Put_Line (Standard_Error,
                             "FAIL: a window appears, but its title is """
                             & Actual_Title & """, expected """
                             & To_String (Info.Window_Name) & """");
                   Set_Exit_Status (Failure);
+               elsif Text_Failed then
+                  Put_Line (Standard_Error,
+                            "FAIL: the window does not contain """
+                            & Expected_Text & """; the window text is: """
+                            & Preview (To_String (Actual_Text)) & """");
+                  Set_Exit_Status (Failure);
                else
                   Put_Line ("OK: a window appears (title """
                             & Actual_Title & """)");
+                  if Expected_Text /= "" then
+                     Put_Line ("OK: the window contains """
+                               & Expected_Text & """");
+                  end if;
                   Set_Exit_Status (Success);
                end if;
 

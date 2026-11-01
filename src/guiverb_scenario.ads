@@ -18,6 +18,9 @@ package Guiverb_Scenario is
       Window_Name : Ada.Strings.Unbounded.Unbounded_String :=
         Ada.Strings.Unbounded.Null_Unbounded_String;
       --  Empty means the "a window appears" unnamed variant.
+      Window_Text : Ada.Strings.Unbounded.Unbounded_String :=
+        Ada.Strings.Unbounded.Null_Unbounded_String;
+      --  Empty means no "the window contains" text assertion (F010).
       Has_Window  : Boolean := False;
    end record;
 

@@ -26,6 +26,11 @@ package Guiverb_WebDriver is
 
    function Title (Session_Id : String) return String;
 
+   function Text (Session_Id : String) return String;
+   --  The rendered text of the window subtree (F010). On the Web
+   --  backend: the text of the document body; how the body is located
+   --  stays backend-private.
+
    procedure Delete_Session (Session_Id : String);
 
 end Guiverb_WebDriver;

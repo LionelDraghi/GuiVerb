@@ -268,6 +268,22 @@ package body Guiverb_WebDriver is
       return Value_Of (To_String (Response), "value");
    end Title;
 
+   function Text (Session_Id : String) return String is
+      Status   : Natural;
+      Response : Unbounded_String;
+      Script   : constant String :=
+        "{""script"":""return document.body.innerText"",""args"":[]}";
+   begin
+      HTTP ("POST", "/session/" & Session_Id & "/execute/sync", Script,
+            Status, Response);
+      if Status not in 200 | 201 then
+         raise Request_Failed
+         with "window text retrieval failed (status"
+              & Status'Image & ")";
+      end if;
+      return Value_Of (To_String (Response), "value");
+   end Text;
+
    procedure Delete_Session (Session_Id : String) is
       Status   : Natural;
       Response : Unbounded_String;
