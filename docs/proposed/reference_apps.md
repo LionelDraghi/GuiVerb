@@ -63,8 +63,10 @@ derived.
   from the scenario headers; its automation is a later feature.
 - No separate feature files under `docs/features/` at this stage: the
   feature proposals under `docs/proposed/` remain the specification.
-- No new application implementation: the second application is
-  specified when milestone 2 starts.
+- Second application scenarios exercise only the executable vocabulary
+  (F005, F010) at creation; the milestone-2 scenarios (states F045,
+  structure F055, focus F060) follow when their features are
+  implemented.
 
 ## Acceptance criteria
 
@@ -102,10 +104,12 @@ Two applications are enough for a long time:
 
 - `witness_web`: the existing witness application, covering milestone
   1 (F005–F040) on platform 1 (Web);
-- a second application, derived from the [ARIA Authoring Practices
-  examples](https://github.com/w3c/aria-practices) (dialog, tabs,
-  grid, …), covering milestone 2 (states F045, structure F055, focus
-  F060) when milestone 2 starts.
+- `witness_aria`: derived from the [ARIA Authoring Practices
+  patterns](https://github.com/w3c/aria-practices) (disclosure,
+  checkbox, list); created with the `apps/` layout, it already runs
+  the executable scenarios and will carry the milestone-2 scenarios
+  (states F045, structure F055, focus F060) as the features are
+  implemented.
 
 Existing Gherkin suites (TodoMVC, WebDriver examples) are not adopted:
 their scenarios use the low-level automation vocabulary that S001

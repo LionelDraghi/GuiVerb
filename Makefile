@@ -62,9 +62,9 @@ step: build
 	   echo "usage: make step STEP=<scenario id>, e.g. make step STEP=f005"; \
 	   exit 1; \
 	fi; \
-	f=`ls tests/scenarios/$(STEP)_*.md 2>/dev/null | head -1`; \
+	f=`ls tests/scenarios/$(STEP)*.md 2>/dev/null | head -1`; \
 	if [ -z "$$f" ]; then \
-	   echo "no scenario tests/scenarios/$(STEP)_*.md"; exit 1; \
+	   echo "no scenario matching tests/scenarios/$(STEP)*.md"; exit 1; \
 	fi; \
 	echo "--- step-by-step replay of $$f (browser displayed)"; \
 	GUIVERB_HEADED=1 bin/guiverb --step "$$f"
