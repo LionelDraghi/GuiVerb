@@ -81,12 +81,15 @@ The separation follows these rules:
 
 ## Architecture direction
 
-```text
-GuiVerb core
-  <-> versioned backend protocol
-        <-> external backend process
-              [optional in-process probe]
-                    <-> application or toolkit
+```mermaid
+---
+config:
+  theme: base
+---
+flowchart LR
+    Core["GuiVerb core"] <-->|"versioned backend protocol"| Backend["external backend process"]
+    Probe["optional in-process probe"] -.-> Backend
+    Backend <--> App["application or toolkit"]
 ```
 
 Observation and action are logically separate. Four action levels are distinguished: system input, toolkit input, semantic action, and direct state manipulation. There is no silent fallback between levels.
