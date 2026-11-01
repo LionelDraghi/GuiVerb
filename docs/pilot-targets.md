@@ -21,6 +21,13 @@
 | Main risk | CSS/XPath leakage | Environment and Wayland complexity | Toolkit API coupling | Identity, focus, text, frame synchronisation |
 | MVP position | Include, probably first | Include | Experimental inclusion | Feasibility gate |
 
+The four pilots are observation models, not an exhaustive platform
+list. Backends of the same external-accessibility-tree family are
+secondary targets — no dedicated phase, the canonical model maps onto
+them directly: Windows via Microsoft UI Automation (UIA), macOS / iOS
+via NSAccessibility, Chromium and Electron via the CDP accessibility
+tree.
+
 ## Web
 
 External browser backend. Canonical semantics cross the protocol; DOM nodes, CSS, XPath, and JavaScript handles remain private.
