@@ -23,7 +23,7 @@ can be exercised end to end.
 
 ## Intended outcome
 
-A dependency-free web application under `tests/apps/witness_web/`,
+A dependency-free web application under `apps/witness_web/`,
 with correct ARIA semantics, that realizes all four reference
 scenarios:
 
@@ -71,4 +71,4 @@ any static file server.
 ## Finalization target
 
 A section in `docs/features/` once the first feature page exists; the
-application itself stays under `tests/apps/witness_web/`.
+application itself stays under `apps/witness_web/`.
