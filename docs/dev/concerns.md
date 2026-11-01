@@ -38,6 +38,7 @@ mark the row `Decided`. A question that no longer matters is marked
 | Q020 | P2 | Can raygui support identity, focus, and text entry with localised instrumentation? | Design | Open | — |
 | Q021 | P2 | Web backend: Playwright or WebDriver/BiDi? | Design | Open | — |
 | Q022 | P2 | How is a password field named in the vocabulary? ARIA has no password role; platforms expose a protected text field | Design | Open | — |
+| Q023 | P2 | How does a run select and launch its backend? Strategy pattern with CLI selection is the working position | Design | In progress | [Backend selection and launch](design_discussions.md#backend-selection-and-launch) |
 
 All open questions are P2 for now: the project is in the
 architectural-exploration phase, and nothing yet blocks a released
@@ -45,8 +46,17 @@ behaviour. Review the priorities when the corresponding phase starts.
 
 ## Statuses
 
-```text
-Open | In progress | Decided | Obsolete
+```mermaid
+---
+config:
+  theme: base
+---
+stateDiagram-v2
+    [*] --> Open
+    Open --> In_progress
+    In_progress --> Decided
+    Open --> Obsolete
+    In_progress --> Obsolete
 ```
 
 ## Adding a concern

@@ -7,6 +7,7 @@ material risk.
 
 | Decision | Status | Date |
 |---|---|---|
+| Backend selection and launch | Discussing | 2026-10-30 |
 | Web driver for the minimal loop | Accepted | 2026-10-30 |
 | <title> | Discussing | YYYY-MM-DD |
 
@@ -110,3 +111,48 @@ backend auditable and the crate dependency-free.
   major (e.g. `npx @puppeteer/browsers install chromedriver@156`).
 - The minimal HTTP/JSON layer is a known, deliberate debt: it grows
   only with the features actually implemented.
+
+### Backend selection and launch
+
+Status: Discussing
+Date: 2026-10-30
+Related: S001, F005, `docs/architecture.md` (logical backend contract)
+
+## Context
+
+The same scenario file must run against several GUIs (Web today, GTK4
+tomorrow). The runner needs (1) a pluggable backend mechanism, (2) a
+way to know which backend a run uses, (3) a way to bring up whatever
+the backend needs (driver, browser, accessibility bus).
+
+## Options considered
+
+### Strategy pattern + CLI selection
+
+- Benefits: the backend contract becomes a tagged type with
+  dispatching primitives (Launch, Find, Observe, Act, Wait); the
+  backend is chosen outside the script (`guiverb --backend=web …`),
+  so CI replays the same file once per backend; the launch of the
+  driver machinery stays owned by the backend, as F005 already does
+  with chromedriver; scenarios stay technology-free (S001).
+- Costs and risks: the backend abstraction must not be introduced
+  before a second backend exists (premature); the CLI grows a flag
+  and, later, profiles.
+
+### Selection and launch inside the scenario (Given steps)
+
+- Benefits: everything is visible in one file; bbt's "Given I run"
+  model carries over directly.
+- Costs and risks: "Given I use the web backend" or "Given I run
+  `chromedriver`" reintroduce platform and tooling names into the
+  scenario (S001 violation); the same script can no longer run
+  unchanged on two GUIs; the backend loses the responsibility for its
+  own chain, and the runner cannot diagnose a stalled launch it does
+  not own.
+
+## Decision
+
+Open while Discussing. Working position: strategy pattern, CLI
+selection, backend-owned launch; the scenario keeps only application
+vocabulary. `Given I run` stays available for application
+preconditions, as in bbt.
