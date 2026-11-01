@@ -9,7 +9,7 @@
 
 .SILENT:
 
-.PHONY: help build release check clean
+.PHONY: help build release check step clean
 
 help:
 	echo "Usage: make [target]"
@@ -19,6 +19,8 @@ help:
 	echo "  release  : build guiverb in release mode"
 	echo "  check    : run the test suites (bbt scenarios in tests/)"
 	echo "  f005 ... : replay one scenario by id, e.g. make f005"
+	echo "  step     : interactive step-by-step replay of one scenario,"
+	echo "             e.g. make step STEP=f005 (the browser is displayed)"
 	echo "  clean    : remove the build and test artifacts"
 	echo ""
 	echo "Headless   : the browser runs headless by default. To display it,"
@@ -51,6 +53,21 @@ f%: build
 	   echo "no test file tests/$@_*.md"; exit 1; \
 	fi; \
 	bbt --cleanup=full "$$f"
+
+# Interactive step-by-step replay of one scenario by id, e.g.
+# make step STEP=f005: guiverb shows each upcoming step and waits for
+# Enter before running it. The browser is displayed.
+step: build
+	@if [ -z "$(STEP)" ]; then \
+	   echo "usage: make step STEP=<scenario id>, e.g. make step STEP=f005"; \
+	   exit 1; \
+	fi; \
+	f=`ls tests/scenarios/$(STEP)_*.md 2>/dev/null | head -1`; \
+	if [ -z "$$f" ]; then \
+	   echo "no scenario tests/scenarios/$(STEP)_*.md"; exit 1; \
+	fi; \
+	echo "--- step-by-step replay of $$f (browser displayed)"; \
+	GUIVERB_HEADED=1 bin/guiverb --step "$$f"
 
 clean:
 	echo "--- clean"

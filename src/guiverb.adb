@@ -57,8 +57,35 @@ procedure Guiverb is
       end if;
    end Stop_Driver;
 
-   Scenario_File : constant String :=
-     (if Argument_Count = 1 then Argument (1) else "");
+   Step_Mode     : Boolean := False;
+   Scenario_File : Unbounded_String;
+
+   User_Abort : exception;
+
+   --  In step-by-step mode (--step), print a message and wait for the
+   --  user to press Enter before the next step runs. Immediate end of
+   --  input aborts the run.
+
+   procedure Wait_For_User (Message : String) is
+      Line : String (1 .. 256);
+      Last : Natural;
+   begin
+      if not Step_Mode then
+         return;
+      end if;
+      Put_Line (Standard_Error, "--- " & Message);
+      Put (Standard_Error, "    press Enter to continue (Ctrl-D to abort)...");
+      Flush (Standard_Error);
+      begin
+         Ada.Text_IO.Get_Line (Line, Last);
+      exception
+         when End_Error =>
+            Put_Line (Standard_Error, "");
+            Put_Line (Standard_Error, "aborted by user");
+            raise User_Abort;
+      end;
+      Put_Line (Standard_Error, "");
+   end Wait_For_User;
 
 begin
    --  The loader path is often polluted in development environments
@@ -69,22 +96,38 @@ begin
       Ada.Environment_Variables.Set ("LD_LIBRARY_PATH", "");
    end if;
 
-   if Scenario_File = "" then
-      Put_Line (Standard_Error, "usage: guiverb <scenario-file>");
+   for I in 1 .. Argument_Count loop
+      if Argument (I) = "--step" then
+         Step_Mode := True;
+      elsif Scenario_File /= Null_Unbounded_String then
+         Put_Line (Standard_Error, "usage: guiverb [--step] <scenario-file>");
+         Set_Exit_Status (Failure);
+         return;
+      else
+         Scenario_File := To_Unbounded_String (Argument (I));
+      end if;
+   end loop;
+
+   if Scenario_File = Null_Unbounded_String then
+      Put_Line (Standard_Error, "usage: guiverb [--step] <scenario-file>");
       Set_Exit_Status (Failure);
       return;
    end if;
 
    declare
+      File : constant String := To_String (Scenario_File);
       Info : constant Guiverb_Scenario.Parsed :=
-        Guiverb_Scenario.Parse (Scenario_File);
+        Guiverb_Scenario.Parse (File);
       URL  : constant String :=
-        App_URL (Scenario_File, To_String (Info.App_Name));
+        App_URL (File, To_String (Info.App_Name));
    begin
+      Wait_For_User
+        ("next step: When I run `" & To_String (Info.App_Name) & "`");
+
       if URL = "" then
          Put_Line (Standard_Error, "no application '"
                    & To_String (Info.App_Name)
-                   & "' found in an apps/ directory near " & Scenario_File);
+                   & "' found in an apps/ directory near " & File);
          Set_Exit_Status (Failure);
          return;
       end if;
@@ -131,6 +174,12 @@ begin
          end if;
       end;
 
+      Wait_For_User
+        ((if To_String (Info.Window_Name) = ""
+          then "next step: Then a window appears"
+          else "next step: Then a window named `"
+               & To_String (Info.Window_Name) & "` appears"));
+
       begin
          declare
             Headed : constant Boolean :=
@@ -142,25 +191,26 @@ begin
             declare
                Actual_Title : constant String :=
                  Guiverb_WebDriver.Title (Session_Id);
+               Mismatch : constant Boolean :=
+                 To_String (Info.Window_Name) /= ""
+                 and then Actual_Title /= To_String (Info.Window_Name);
             begin
-               Guiverb_WebDriver.Delete_Session (Session_Id);
-
-               if To_String (Info.Window_Name) /= ""
-                 and then Actual_Title /= To_String (Info.Window_Name)
-               then
+               if Mismatch then
                   Put_Line (Standard_Error,
                             "FAIL: a window appears, but its title is """
                             & Actual_Title & """, expected """
                             & To_String (Info.Window_Name) & """");
-                  Stop_Driver;
                   Set_Exit_Status (Failure);
-                  return;
+               else
+                  Put_Line ("OK: a window appears (title """
+                            & Actual_Title & """)");
+                  Set_Exit_Status (Success);
                end if;
 
-               Put_Line ("OK: a window appears (title """
-                         & Actual_Title & """)");
+               Wait_For_User
+                 ("end of scenario: press Enter to close the browser");
+               Guiverb_WebDriver.Delete_Session (Session_Id);
                Stop_Driver;
-               Set_Exit_Status (Success);
             end;
          end;
       exception
@@ -180,6 +230,9 @@ begin
    end;
 
 exception
+   when User_Abort =>
+      Stop_Driver;
+      Set_Exit_Status (Failure);
    when others =>
       Stop_Driver;
       raise;
