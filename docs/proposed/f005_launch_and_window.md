@@ -77,4 +77,4 @@ Not executable yet: the GuiVerb runner does not exist. Target syntax:
 
 ## Finalization target
 
-`docs/features/scenario_vocabulary.md` (to create).
+`docs/features/scenario_vocabulary.md`.

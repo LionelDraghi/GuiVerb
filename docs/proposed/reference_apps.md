@@ -61,8 +61,11 @@ derived.
   results.
 - No matrix-generation tool in this change: the matrix is derivable
   from the scenario headers; its automation is a later feature.
-- No separate feature files under `docs/features/` at this stage: the
-  feature proposals under `docs/proposed/` remain the specification.
+- No separate feature files under `docs/features/` beyond the
+  vocabulary summary (`docs/features/scenario_vocabulary.md`, which
+  gathers implemented and planned steps with pointers to the
+  proposals): the feature proposals under `docs/proposed/` remain the
+  detailed specification.
 - Second application scenarios exercise only the executable vocabulary
   (F005, F010) at creation; the milestone-2 scenarios (states F045,
   structure F055, focus F060) follow when their features are
@@ -150,9 +153,7 @@ platform. Build outputs are generated locally and never committed.
 - Strengthens S001: the shared suite becomes the organisational rule,
   not only a vocabulary rule.
 - Revises `docs/proposed/witness_app_web.md` (location
-  `tests/apps/witness_web/` → `apps/witness_web/`) and the F005
-  finalization target (no separate `docs/features/` files at this
-  stage).
+  `tests/apps/witness_web/` → `apps/witness_web/`).
 - The app × platform matrix extends `docs/pilot-targets.md`: that
   document compares platform approaches; the matrix records conformance
   results per application and platform.
