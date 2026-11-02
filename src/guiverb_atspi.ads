@@ -41,8 +41,10 @@ package Guiverb_ATSPI is
 
    function Window_Contains (Expected : String) return Boolean;
    --  The window's rendered text content: the accessible names and
-   --  Text-interface content of the window subtree (the GTK
-   --  equivalent of the Web window's innerText).
+   --  Text-interface content of the application's window subtree —
+   --  every window of the application, dialogs included (a dialog
+   --  opens in its own window on GTK; the Web equivalent keeps it
+   --  in the document's text).
 
    function Observed_Text return String;
    --  The last gathered window text, for the FAIL diagnostic.
@@ -57,6 +59,24 @@ package Guiverb_ATSPI is
    function Press_Button (Name : String) return Boolean;
    --  Invoke the named push button's first action (AT-SPI semantic
    --  action, not injected input).
+
+   function Dialog_Appears (Expected_Name : String := "") return Boolean;
+   --  Poll for a dialog of the launched application (correlation by
+   --  process id): AT-SPI role dialog, exact accessible-name match,
+   --  bounded harness deadline; the diagnostic when False carries no
+   --  observed name — dialogs are matched, not collected.
+
+   function Text_Field_Named
+     (Name : String; Password : Boolean := False) return Boolean;
+   --  A text field of the launched application named Name (F030):
+   --  AT-SPI role text (GTK 4 maps Entry and PasswordEntry to the
+   --  same role; the password variant is not distinguished by
+   --  role on GTK 4 — Q022). Exact accessible-name match (the
+   --  accname comes from the linked label), bounded deadline.
+
+   function Field_Focused (Name : String) return Boolean;
+   --  The named text field has the platform focus: STATE_FOCUSED
+   --  (F030). Bounded deadline.
 
    procedure Shutdown;
    --  Kill (and reap) the launched application.

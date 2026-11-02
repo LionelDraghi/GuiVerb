@@ -30,6 +30,11 @@ runner and the backends implementing them: `src/guiverb_scenario.*`,
 | `And there is a button named <name>` | role + accessible name lookup | F015 |
 | `And the <name> button is enabled` / `is disabled` | user-visible enabled state of the looked-up button | F015 |
 | `When I press the <name> button` | semantic activation; the Web backend injects real input events | F020 |
+| `Then a <name> dialog eventually appears` | role `dialog`, bounded wait — the harness deadline is configuration, the failure diagnostic carries it; `alertdialog` same feature | F025 |
+| `the dialog contains a textbox named <name>` | text field lookup by accessible name (label or aria association) | F030 |
+| `the dialog contains a password textbox named <name>` | protected field; same role as textbox on both backends (Q022) | F030 |
+| `the <name> textbox has focus` | platform focus, not an ARIA concept | F030 |
+
 
 Matching is exact on accessible name (element content or `aria-label`
 on the Web backend); the articles, casing, and partial-matching
@@ -60,9 +65,6 @@ Milestone 1 — minimal loop, remainder:
 
 | Step | Meaning | Proposal |
 |---|---|---|
-| `Then a <name> dialog eventually appears` | role `dialog`, bounded wait; `alertdialog` same feature | F025 |
-| `the dialog contains a textbox named <name>` | textbox lookup, password naming under discussion (Q022) | F030 |
-| `the <name> textbox has focus` | focus assertion | F030 |
 | `When I type <text> into the <name> textbox` | text entry | F035 |
 | `When I set the <name> slider to <value>` | value entry | F035 |
 | `When I increment the <name> spinbutton` | value entry | F035 |

@@ -556,13 +556,45 @@ begin
             function Eventually (Holds : Condition) return Boolean is
                OK : Boolean := Holds.all;
             begin
-               for Try in 1 .. 50 loop
+               for Try in 1 .. 30 loop
                   OK := Holds.all;
                   exit when OK;
-                  delay 0.1;
+                  delay 0.2;
                end loop;
                return OK;
             end Eventually;
+
+            Deadline : constant Duration := 6.0;
+            --  The shared harness deadline: every observation polls
+            --  within it; 'eventually' is the scenario vocabulary,
+            --  the duration stays configuration. Same deadline as
+            --  the GTK backend's polls.
+
+            function Deadline_Text return String is
+            begin
+               return Ada.Strings.Fixed.Trim
+                 (Duration'Image (Deadline), Ada.Strings.Both);
+            end Deadline_Text;
+
+            --  Exact membership in a line-break-separated list of
+            --  accessible names.
+
+            function Exact_Member (List, Item : String) return Boolean is
+               First : Natural := List'First;
+            begin
+               if List = "" then
+                  return False;
+               end if;
+               for I in List'Range loop
+                  if List (I) = ASCII.LF then
+                     if List (First .. I - 1) = Item then
+                        return True;
+                     end if;
+                     First := I + 1;
+                  end if;
+               end loop;
+               return List (First .. List'Last) = Item;
+            end Exact_Member;
 
             procedure Check_Window (Expected : String) is
                function Holds return Boolean is
@@ -691,6 +723,126 @@ begin
                end if;
             end Do_Press;
 
+            procedure Check_Dialog (Expected : String) is
+               function Holds return Boolean is
+               begin
+                  return Exact_Member
+                           (Guiverb_WebDriver.Dialog_Names
+                              (Session_Id.all), Expected);
+               end Holds;
+            begin
+               if not Eventually (Holds'Unrestricted_Access) then
+                  Put_Line (Standard_Error,
+                            "FAIL: no dialog named """ & Expected
+                            & """ appears before the deadline ("
+                            & Deadline_Text & " s)");
+                  Failed := True;
+               else
+                  Put_Line ("OK: a dialog named """ & Expected
+                            & """ appears");
+               end if;
+            end Check_Dialog;
+
+            procedure Check_Textbox
+              (Expected : String; Password : Boolean) is
+               function Holds return Boolean is
+               begin
+                  return Exact_Member
+                           (Guiverb_WebDriver.Field_Names
+                              (Session_Id.all, Password), Expected);
+               end Holds;
+            begin
+               if not Eventually (Holds'Unrestricted_Access) then
+                  Put_Line (Standard_Error,
+                            "FAIL: no "
+                            & (if Password
+                               then "password textbox"
+                               else "textbox")
+                            & " named """ & Expected
+                            & """ appears before the deadline ("
+                            & Deadline_Text & " s)");
+                  Failed := True;
+               else
+                  Put_Line ("OK: there is a "
+                            & (if Password
+                               then "password textbox"
+                               else "textbox")
+                            & " named """ & Expected & """");
+               end if;
+            end Check_Textbox;
+
+            procedure Check_Textbox_Focus (Expected : String) is
+               function Holds return Boolean is
+               begin
+                  return Guiverb_WebDriver.Focused_Name (Session_Id.all)
+                           = Expected;
+               end Holds;
+            begin
+               if not Eventually (Holds'Unrestricted_Access) then
+                  Put_Line (Standard_Error,
+                            "FAIL: focus is on """
+                            & Guiverb_WebDriver.Focused_Name
+                                (Session_Id.all)
+                            & """, not on the """ & Expected
+                            & """ textbox (deadline "
+                            & Deadline_Text & " s)");
+                  Failed := True;
+               else
+                  Put_Line ("OK: the """ & Expected
+                            & """ textbox has focus");
+               end if;
+            end Check_Textbox_Focus;
+
+            procedure Check_Dialog_Atspi (Expected : String) is
+            begin
+               if Guiverb_ATSPI.Dialog_Appears (Expected) then
+                  Put_Line ("OK: a dialog named """ & Expected
+                            & """ appears");
+               else
+                  Put_Line (Standard_Error,
+                            "FAIL: no dialog named """ & Expected
+                            & """ appears before the deadline ("
+                            & Deadline_Text & " s)");
+                  Failed := True;
+               end if;
+            end Check_Dialog_Atspi;
+
+            procedure Check_Textbox_Atspi
+              (Expected : String; Password : Boolean) is
+            begin
+               if Guiverb_ATSPI.Text_Field_Named (Expected, Password) then
+                  Put_Line ("OK: there is a "
+                            & (if Password
+                               then "password textbox"
+                               else "textbox")
+                            & " named """ & Expected & """");
+               else
+                  Put_Line (Standard_Error,
+                            "FAIL: no "
+                            & (if Password
+                               then "password textbox"
+                               else "textbox")
+                            & " named """ & Expected
+                            & """ appears before the deadline ("
+                            & Deadline_Text & " s)");
+                  Failed := True;
+               end if;
+            end Check_Textbox_Atspi;
+
+            procedure Check_Textbox_Focus_Atspi (Expected : String) is
+            begin
+               if Guiverb_ATSPI.Field_Focused (Expected) then
+                  Put_Line ("OK: the """ & Expected
+                            & """ textbox has focus");
+               else
+                  Put_Line (Standard_Error,
+                            "FAIL: the """ & Expected
+                            & """ textbox has no focus (deadline "
+                            & Deadline_Text & " s)");
+                  Failed := True;
+               end if;
+            end Check_Textbox_Focus_Atspi;
+
       begin
          if Backend = Web then
             --  A server application starts after the driver is ready;
@@ -818,6 +970,49 @@ begin
                            Do_Press_Atspi (To_String (Current.Name));
                         else
                            Do_Press (To_String (Current.Name));
+                        end if;
+                     when Guiverb_Scenario.Dialog_Step =>
+                        Wait_For_User
+                          ("next step: Then a `"
+                           & To_String (Current.Name)
+                           & "` dialog eventually appears");
+                        if Backend = GTK then
+                           Check_Dialog_Atspi (To_String (Current.Name));
+                        else
+                           Check_Dialog (To_String (Current.Name));
+                        end if;
+                     when Guiverb_Scenario.Textbox_Step =>
+                        Wait_For_User
+                          ("next step: And the dialog contains a textbox"
+                           & " named `" & To_String (Current.Name) & "`");
+                        if Backend = GTK then
+                           Check_Textbox_Atspi
+                             (To_String (Current.Name), False);
+                        else
+                           Check_Textbox (To_String (Current.Name), False);
+                        end if;
+                     when Guiverb_Scenario.Textbox_Password_Step =>
+                        Wait_For_User
+                          ("next step: And the dialog contains a password"
+                           & " textbox named `"
+                           & To_String (Current.Name) & "`");
+                        if Backend = GTK then
+                           Check_Textbox_Atspi
+                             (To_String (Current.Name), True);
+                        else
+                           Check_Textbox (To_String (Current.Name), True);
+                        end if;
+                     when Guiverb_Scenario.Textbox_Focus_Step =>
+                        Wait_For_User
+                          ("next step: And the `"
+                           & To_String (Current.Name)
+                           & "` textbox has focus");
+                        if Backend = GTK then
+                           Check_Textbox_Focus_Atspi
+                             (To_String (Current.Name));
+                        else
+                           Check_Textbox_Focus
+                             (To_String (Current.Name));
                         end if;
                   end case;
                   exit when Failed;

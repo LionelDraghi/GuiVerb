@@ -65,7 +65,10 @@ package body Guiverb_ATSPI is
    --  SENSITIVE = 24 is GTK 4's user-visible "enabled" state.
 
    Role_Push_Button : constant int := 43;
+   Role_Dialog      : constant int := 16;
+   Role_Text        : constant int := 61;
    State_Sensitive  : constant int := 24;
+   State_Focused    : constant int := 12;
 
    function Atspi_State_Set_Contains
      (Set : System.Address; State : int) return int;
@@ -153,11 +156,13 @@ package body Guiverb_ATSPI is
       return System.Null_Address;
    end Window_Of;
 
-   --  Depth-first search for a push button named Name. The caller
-   --  owns the returned reference; every visited node is unref'd.
+   --  Depth-first search for a node of role Role named Name. The
+   --  caller owns the returned reference; every visited node is
+   --  unref'd.
 
-   function Find_Button_Named
-     (Obj : System.Address; Name : String) return System.Address
+   function Find_Role_Named
+     (Obj : System.Address; Role, Name : int; Name_Text : String)
+     return System.Address
    is
       Child, Found : System.Address;
    begin
@@ -168,14 +173,16 @@ package body Guiverb_ATSPI is
          Child := Atspi_Accessible_Get_Child_At_Index (Obj, int (C - 1));
          if Child /= System.Null_Address then
             if Atspi_Accessible_Get_Role (Child, System.Null_Address)
-                 = Role_Push_Button
-              and then C_String_Of
-                         (Atspi_Accessible_Get_Name
-                            (Child, System.Null_Address)) = Name
+                 = Role
+              and then (Name = -1
+                        or else C_String_Of
+                                  (Atspi_Accessible_Get_Name
+                                     (Child, System.Null_Address))
+                              = Name_Text)
             then
                return Child;
             end if;
-            Found := Find_Button_Named (Child, Name);
+            Found := Find_Role_Named (Child, Role, Name, Name_Text);
             G_Object_Unref (Child);
             if Found /= System.Null_Address then
                return Found;
@@ -183,7 +190,7 @@ package body Guiverb_ATSPI is
          end if;
       end loop;
       return System.Null_Address;
-   end Find_Button_Named;
+   end Find_Role_Named;
 
    --  The window's rendered text content: the accessible names of the
    --  window subtree (GTK 4 labels carry their text as accessible
@@ -253,22 +260,53 @@ package body Guiverb_ATSPI is
       return To_String (Observed);
    end Observed_Title;
 
+   function App_Node return System.Address is
+      Desktop : constant System.Address := Atspi_Get_Desktop (0);
+   begin
+      if Desktop = System.Null_Address then
+         return System.Null_Address;
+      end if;
+      for A in 1 .. Atspi_Accessible_Get_Child_Count (Desktop) loop
+         declare
+            App : constant System.Address :=
+              Atspi_Accessible_Get_Child_At_Index (Desktop, int (A - 1));
+         begin
+            if App /= System.Null_Address
+              and then Target_Pid > 0
+              and then Integer
+                         (Atspi_Accessible_Get_Process_Id
+                            (App, System.Null_Address)) = Target_Pid
+            then
+               return App;
+            end if;
+            if App /= System.Null_Address then
+               G_Object_Unref (App);
+            end if;
+         end;
+      end loop;
+      return System.Null_Address;
+   end App_Node;
+
    --  The steps below poll the accessibility tree within the harness
    --  deadline: the application window appears, then its subtree
    --  builds, and a previous step may still be propagating.
 
    function Window_Contains (Expected : String) return Boolean is
       Deadline : constant Time := Clock + 6.0;
-      Frame    : System.Address;
+      App      : System.Address;
    begin
       Last_Text := Null_Unbounded_String;
       while Clock < Deadline loop
-         Frame := Window_Of ("");
-         if Frame /= System.Null_Address then
+         App := App_Node;
+         if App /= System.Null_Address then
+            --  The window text of the application: every window of
+            --  the application in the tree — a dialog opens in its
+            --  own window (unlike a DOM dialog, which stays in the
+            --  parent document's text).
             declare
-               Text : constant String := Gather_Text (Frame);
+               Text : constant String := Gather_Text (App);
             begin
-               G_Object_Unref (Frame);
+               G_Object_Unref (App);
                Last_Text := To_Unbounded_String (Text);
                if Ada.Strings.Fixed.Index (Text, Expected) /= 0 then
                   return True;
@@ -293,7 +331,8 @@ package body Guiverb_ATSPI is
       while Clock < Deadline loop
          Frame := Window_Of ("");
          if Frame /= System.Null_Address then
-            Button := Find_Button_Named (Frame, Name);
+            Button := Find_Role_Named
+                         (Frame, Role_Push_Button, -1, Name);
             G_Object_Unref (Frame);
             if Button /= System.Null_Address then
                G_Object_Unref (Button);
@@ -314,7 +353,8 @@ package body Guiverb_ATSPI is
       while Clock < Deadline loop
          Frame := Window_Of ("");
          if Frame /= System.Null_Address then
-            Button := Find_Button_Named (Frame, Name);
+            Button := Find_Role_Named
+                         (Frame, Role_Push_Button, -1, Name);
             G_Object_Unref (Frame);
             if Button /= System.Null_Address then
                Enabled := Atspi_State_Set_Contains
@@ -337,7 +377,8 @@ package body Guiverb_ATSPI is
       while Clock < Deadline loop
          Frame := Window_Of ("");
          if Frame /= System.Null_Address then
-            Button := Find_Button_Named (Frame, Name);
+            Button := Find_Role_Named
+                         (Frame, Role_Push_Button, -1, Name);
             G_Object_Unref (Frame);
             if Button /= System.Null_Address then
                declare
@@ -354,6 +395,114 @@ package body Guiverb_ATSPI is
       end loop;
       return False;
    end Press_Button;
+
+   --  The application node: the desktop application of the process
+   --  the backend launched. The caller owns the returned reference.
+   function Dialog_Appears (Expected_Name : String := "") return Boolean is
+      Deadline : constant Time := Clock + 6.0;
+      App      : System.Address;
+      Found    : System.Address;
+   begin
+      while Clock < Deadline loop
+         App := App_Node;
+         if App /= System.Null_Address then
+            Found := Find_Role_Named
+                       (App, Role_Dialog, -1, Expected_Name);
+            G_Object_Unref (App);
+            if Found /= System.Null_Address then
+               G_Object_Unref (Found);
+               return True;
+            end if;
+         end if;
+         delay 0.2;
+      end loop;
+      return False;
+   end Dialog_Appears;
+
+   --  Depth-first search for a text field named Name (rôle text —
+   --  GTK 4 maps Entry and PasswordEntry to that role, Q022).
+
+   function Find_Text_Field_Named
+     (Obj : System.Address; Name : String) return System.Address
+   is
+      Child, Found : System.Address;
+   begin
+      if Obj = System.Null_Address then
+         return System.Null_Address;
+      end if;
+      for C in 1 .. Atspi_Accessible_Get_Child_Count (Obj) loop
+         Child := Atspi_Accessible_Get_Child_At_Index (Obj, int (C - 1));
+         if Child /= System.Null_Address then
+            if Atspi_Accessible_Get_Role (Child, System.Null_Address)
+                 = Role_Text
+              and then C_String_Of
+                         (Atspi_Accessible_Get_Name
+                            (Child, System.Null_Address)) = Name
+            then
+               return Child;
+            end if;
+            Found := Find_Text_Field_Named (Child, Name);
+            G_Object_Unref (Child);
+            if Found /= System.Null_Address then
+               return Found;
+            end if;
+         end if;
+      end loop;
+      return System.Null_Address;
+   end Find_Text_Field_Named;
+
+   function Text_Field_Named
+     (Name : String; Password : Boolean := False) return Boolean
+   is
+      pragma Unreferenced (Password);
+      --  GTK 4 does not distinguish password fields by role (Q022):
+      --  both projections match role text; the password variant of
+      --  the scenario resolves through the same search.
+      Deadline : constant Time := Clock + 6.0;
+      App      : System.Address;
+      Field    : System.Address;
+   begin
+      while Clock < Deadline loop
+         App := App_Node;
+         if App /= System.Null_Address then
+            Field := Find_Text_Field_Named (App, Name);
+            G_Object_Unref (App);
+            if Field /= System.Null_Address then
+               G_Object_Unref (Field);
+               return True;
+            end if;
+         end if;
+         delay 0.2;
+      end loop;
+      return False;
+   end Text_Field_Named;
+
+   function Field_Focused (Name : String) return Boolean is
+      Deadline : constant Time := Clock + 6.0;
+      App      : System.Address;
+      Field    : System.Address;
+   begin
+      while Clock < Deadline loop
+         App := App_Node;
+         if App /= System.Null_Address then
+            Field := Find_Text_Field_Named (App, Name);
+            G_Object_Unref (App);
+            if Field /= System.Null_Address then
+               declare
+                  Focused : constant Boolean :=
+                    Atspi_State_Set_Contains
+                      (Atspi_Accessible_Get_State_Set (Field),
+                       State_Focused) /= 0;
+               begin
+                  G_Object_Unref (Field);
+                  return Focused;
+               end;
+            end if;
+         end if;
+         delay 0.2;
+      end loop;
+      return False;
+   end Field_Focused;
 
    procedure Shutdown is
       Status  : GNAT.OS_Lib.Process_Id;

@@ -40,6 +40,7 @@ mark the row `Decided`. A question that no longer matters is marked
 | Q022 | P2 | How is a password field named in the vocabulary? ARIA has no password role; platforms expose a protected text field | Design | Open | — |
 | Q023 | P2 | How does a run select and launch its backend? Strategy pattern with CLI selection; application-instance selection (GUIVERB_APP) and the server-application launcher (serve) are decided | Design | In progress | [Backend selection and launch](design_discussions.md#backend-selection-and-launch), [Application resolution and server applications](design_discussions.md#application-resolution-and-server-applications) |
 | Q024 | P2 | A GtkAda4 application registers on the a11y bus as "Unnamed" despite its application id; GuiVerb's GTK backend works around it by pid-based correlation | Design | Open | [forum thread](https://forum.ada-lang.io/t/preview-testing-gtkada4-with-alire-on-ubuntu-26-04/4899) and `~/prj/gtkada4_test` probe |
+| Q026 | P2 | Gnoga 2.2.3 multi_connect: the WebSocket click dispatch never reaches server-side handlers in the witness_gnoga login flow (`NO_OBJECT` on the clicked object's id); the identical-structure pilot works, several partial causes observed (element `Attribute` setter, `Section_Type` creation). F025+ scenario steps stay blocked on the Gnoga chain | Bug | Open | `apps/witness_gnoga/src/witness_gnoga.adb` note and the gnoga-server-connection dispatch trace |
 
 All open questions are P2 for now: the project is in the
 architectural-exploration phase, and nothing yet blocks a released

@@ -141,6 +141,54 @@ package body Guiverb_Scenario is
                      end if;
                      Add_Step (Press_Step, Name);
                   end;
+               elsif Ada.Strings.Fixed.Index
+                       (Line, "dialog eventually appears") > 0
+               then
+                  declare
+                     Name : constant String := Backticked (Line);
+                  begin
+                     if Name = "" then
+                        raise Parse_Error
+                        with "dialog step without name: " & Line;
+                     end if;
+                     Add_Step (Dialog_Step, Name);
+                  end;
+               elsif Ada.Strings.Fixed.Index
+                       (Line, "textbox has focus") > 0
+               then
+                  declare
+                     Name : constant String := Backticked (Line);
+                  begin
+                     if Name = "" then
+                        raise Parse_Error
+                        with "textbox focus step without name: " & Line;
+                     end if;
+                     Add_Step (Textbox_Focus_Step, Name);
+                  end;
+               elsif Ada.Strings.Fixed.Index
+                       (Line, "password textbox named") > 0
+               then
+                  declare
+                     Name : constant String := Backticked (Line);
+                  begin
+                     if Name = "" then
+                        raise Parse_Error
+                        with "password textbox step without name: " & Line;
+                     end if;
+                     Add_Step (Textbox_Password_Step, Name);
+                  end;
+               elsif Ada.Strings.Fixed.Index
+                       (Line, "textbox named") > 0
+               then
+                  declare
+                     Name : constant String := Backticked (Line);
+                  begin
+                     if Name = "" then
+                        raise Parse_Error
+                        with "textbox step without name: " & Line;
+                     end if;
+                     Add_Step (Textbox_Step, Name);
+                  end;
                else
                   if Line'Length >= 2
                     and then Line (Line'First .. Line'First + 1) = "- "

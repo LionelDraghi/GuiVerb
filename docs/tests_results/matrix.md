@@ -34,8 +34,8 @@ This is milestone 1 in progress; F025–F075 are proposals
 | F010 Text content of a window | OK | OK | OK |
 | F015 Button by accessible name | OK | OK | OK |
 | F020 Press action | OK | OK | OK |
-| F025 Dialog appearance | planned | planned | planned |
-| F030 Text fields and focus | planned | planned | planned |
+| F025 Dialog appearance | OK | OK | planned (Q026) |
+| F030 Text fields and focus | OK | OK | planned (Q026) |
 | F035 Text and value entry | planned | planned | planned |
 | F040 Alerts and status messages | planned | planned | planned |
 

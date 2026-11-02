@@ -22,7 +22,11 @@ package Guiverb_Scenario is
       Button_Step,          --  there is a button named <name>
       Button_Enabled_Step,  --  the <name> button is enabled
       Button_Disabled_Step, --  the <name> button is disabled
-      Press_Step);          --  When I press the <name> button
+      Press_Step,             --  When I press the <name> button
+      Dialog_Step,            --  a <name> dialog eventually appears
+      Textbox_Step,           --  the dialog contains a textbox named <name>
+      Textbox_Password_Step,  --  a password textbox named <name>
+      Textbox_Focus_Step);    --  the <name> textbox has focus
 
    type Step is record
       Kind : Step_Kind;

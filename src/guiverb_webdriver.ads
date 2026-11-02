@@ -46,6 +46,26 @@ package Guiverb_WebDriver is
    --  default action, injected as real input events; scenario
    --  vocabulary stays "press".
 
+   function Dialog_Names (Session_Id : String) return String;
+   --  The accessible names of the currently open dialogs (F025):
+   --  native dialog elements that are open, plus role="dialog"
+   --  elements; one name per line ("\u001f"-joined internally, line
+   --  breaks inside a name preserved). Accessible name per accname:
+   --  aria-label, or the text of the elements listed by
+   --  aria-labelledby. Empty result when no dialog is open.
+
+   function Field_Names
+     (Session_Id : String; Password : Boolean) return String;
+   --  The accessible names of the currently visible text fields (F030):
+   --  Password = true selects input[type=password] fields; false
+   --  selects textboxes: input[type=text], textarea, role="textbox".
+   --  One name per line, same accname rules as the dialog lookups.
+   --  Empty result when no field matches.
+
+   function Focused_Name (Session_Id : String) return String;
+   --  The accessible name of the focused element (F030): "" when no
+   --  element has focus.
+
    procedure Delete_Session (Session_Id : String);
 
 end Guiverb_WebDriver;

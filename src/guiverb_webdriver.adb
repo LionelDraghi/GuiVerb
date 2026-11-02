@@ -366,6 +366,139 @@ package body Guiverb_WebDriver is
       end if;
    end Click;
 
+   --  F025: accessible names of the currently open dialogs, joined
+   --  with line breaks. Accessible name per accname: aria-label, or
+   --  the text of the elements listed by aria-labelledby. The script
+   --  uses single quotes only (it is one JSON string literal).
+
+   Dialog_Script : constant String :=
+     "{""script"":""return (function () {"
+     & "var acc = function (d) {"
+     & "var a = d.getAttribute('aria-label');"
+     & "if (a) { return a; }"
+     & "var ids = (d.getAttribute('aria-labelledby') || '')"
+     & ".split(/\\s+/).filter(Boolean);"
+     & "return ids.map(function (i) {"
+     & "var e = document.getElementById(i);"
+     & "return e == null ? '' : e.textContent.trim();"
+     & "}).join(' ');"
+     & "};"
+     & "var out = [];"
+     & "document.querySelectorAll('dialog[open], [role=dialog]')"
+     & ".forEach(function (d) {"
+     & "if (d.checkVisibility && !d.checkVisibility()) { return; }"
+     & "var n = acc(d);"
+     & "if (n !== '') { out.push(n); }"
+     & "});"
+     & "return out.join('\\n');"
+     & "})()" & """,""args"":[]}";
+
+   function Dialog_Names (Session_Id : String) return String is
+      Status   : Natural;
+      Response : Unbounded_String;
+   begin
+      HTTP ("POST", "/session/" & Session_Id & "/execute/sync",
+            Dialog_Script, Status, Response);
+      if Status not in 200 | 201 then
+         raise Request_Failed
+         with "dialog names retrieval failed (status"
+              & Status'Image & ")";
+      end if;
+      return Value_Of (To_String (Response), "value");
+   end Dialog_Names;
+
+   --  F030: accessible names of visible fields, joined with line
+   --  breaks. The field set is selected by the Field_Kind parameter.
+   --  The script uses single quotes only (it is one JSON string).
+
+   function Field_Script (Password : Boolean) return String is
+      Selector : constant String :=
+        (if Password
+         then "'input[type=password]'"
+         else "'input[type=text], textarea, [role=textbox]'");
+   begin
+      return "{""script"":""return (function () {"
+        & "var acc = function (e) {"
+        & "var a = e.getAttribute('aria-label');"
+        & "if (a) { return a; }"
+        & "var lb = e.getAttribute('aria-labelledby');"
+        & "if (lb) {"
+        & "return lb.split(/\\s+/).filter(Boolean).map(function (i) {"
+        & "var l = document.getElementById(i);"
+        & "return l == null ? '' : l.textContent.trim();"
+        & "}).join(' ');"
+        & "}"
+        & "if (e.id) {"
+        & "var l = document.querySelector"
+        & "('label[for=' + JSON.stringify(e.id) + ']');"
+        & "if (l) { return l.textContent.trim(); }"
+        & "}"
+        & "var w = e.closest('label');"
+        & "return w ? w.textContent.trim() : '';"
+        & "};"
+        & "var out = [];"
+        & "document.querySelectorAll(" & Selector & ")"
+        & ".forEach(function (e) {"
+        & "if (!e.checkVisibility || !e.checkVisibility()) { return; }"
+        & "var n = acc(e);"
+        & "if (n !== '') { out.push(n); }"
+        & "});"
+        & "return out.join('\\n');"
+        & "})()" & """,""args"":[]}";
+   end Field_Script;
+
+   function Field_Names
+     (Session_Id : String; Password : Boolean) return String
+   is
+      Status   : Natural;
+      Response : Unbounded_String;
+   begin
+      HTTP ("POST", "/session/" & Session_Id & "/execute/sync",
+            Field_Script (Password), Status, Response);
+      if Status not in 200 | 201 then
+         raise Request_Failed
+         with "field names retrieval failed (status"
+              & Status'Image & ")";
+      end if;
+      return Value_Of (To_String (Response), "value");
+   end Field_Names;
+
+   Focus_Script : constant String :=
+     "{""script"":""return (function () {"
+     & "var e = document.activeElement;"
+     & "if (!e || e === document.body) { return ''; }"
+     & "var a = e.getAttribute('aria-label');"
+     & "if (a) { return a; }"
+     & "var lb = e.getAttribute('aria-labelledby');"
+     & "if (lb) {"
+     & "return lb.split(/\\s+/).filter(Boolean).map(function (i) {"
+     & "var l = document.getElementById(i);"
+     & "return l == null ? '' : l.textContent.trim();"
+     & "}).join(' ');"
+     & "}"
+     & "if (e.id) {"
+     & "var l = document.querySelector"
+     & "('label[for=' + JSON.stringify(e.id) + ']');"
+     & "if (l) { return l.textContent.trim(); }"
+     & "}"
+     & "var w = e.closest('label');"
+     & "return w ? w.textContent.trim() : '';"
+     & "})()" & """,""args"":[]}";
+
+   function Focused_Name (Session_Id : String) return String is
+      Status   : Natural;
+      Response : Unbounded_String;
+   begin
+      HTTP ("POST", "/session/" & Session_Id & "/execute/sync",
+            Focus_Script, Status, Response);
+      if Status not in 200 | 201 then
+         raise Request_Failed
+         with "focused name retrieval failed (status"
+              & Status'Image & ")";
+      end if;
+      return Value_Of (To_String (Response), "value");
+   end Focused_Name;
+
    procedure Delete_Session (Session_Id : String) is
       Status   : Natural;
       Response : Unbounded_String;
