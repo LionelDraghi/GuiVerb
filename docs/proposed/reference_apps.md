@@ -105,8 +105,13 @@ This table is the link the conformance matrix is built from: features
 
 Two applications are enough for a long time:
 
-- `witness_web`: the existing witness application, covering milestone
-  1 (F005–F040) on platform 1 (Web);
+- `witness`: THE reference application, one directory containing the
+  platform projections of the same behaviour (window "GuiVerb
+  witness", button "Continue"): `index.html` for the Web backend, a
+  local GTK4 sub-crate (`gtkada4` dependency, local make, binary in
+  `bin/witness`) for platform 2 — no wrapper, no per-platform
+  application name: each backend launches its own projection. Covers
+  milestone 1 (F005–F040);
 - `witness_aria`: derived from the [ARIA Authoring Practices
   patterns](https://github.com/w3c/aria-practices) (disclosure,
   checkbox, list); created with the `apps/` layout, it already runs
@@ -138,7 +143,7 @@ platform. Build outputs are generated locally and never committed.
 ### Scenario: the shared suite still runs after the reorganisation
 
 - When I run `make check`
-- Then the output contains `Success`
+- Then the output contains `check OK`
 - And I get no error
 
 ## Verification beyond bbt

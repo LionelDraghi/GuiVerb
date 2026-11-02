@@ -23,22 +23,29 @@ runner and Web backend implementing them: `src/guiverb_scenario.*`,
 
 | Step | Meaning | Feature |
 |---|---|---|
-| `When I run <app>` | launch the application under test, resolved in `apps/` | F005 |
+| `When I run <app>` | launch the application under test: resolved in `apps/<app>/` — each backend picks its own projection (Web: `index.html`; GTK: `bin/<app>`, run with `GTK_A11Y=atspi`) | F005 |
 | `Then a window appears` | a top-level window exists | F005 |
 | `Then a window named <name> appears` | named variant (window title on the Web backend) | F005 |
 | `And the window contains <text>` | rendered text content of the window subtree | F010 |
 | `And there is a button named <name>` | role + accessible name lookup | F015 |
 | `And the <name> button is enabled` / `is disabled` | user-visible enabled state of the looked-up button | F015 |
+| `When I press the <name> button` | semantic activation; the Web backend injects real input events | F020 |
 
 Matching is exact on accessible name (element content or `aria-label`
 on the Web backend); the articles, casing, and partial-matching
-questions are open (Q010, Q011, Q012). The executable scenarios are in
-`tests/scenarios/`, one file per application, each opening with the
-feature/scenario table.
+questions are open (Q010, Q011, Q012). The executable scenarios live
+in `tests/scenarios/` — **one file per feature, never one per
+application or platform**: the scenario invokes the stable application
+name, and each backend launches its own projection of
+`apps/<application>/`.
+`make check` runs the suite directly with the runner and trusts its
+exit status (S002: for GUI scenarios, the GuiVerb runner is the
+executor). Each file carries a `## Scenario:` title, keeping it bbt
+compatible.
 
 Minimal runnable example (witness application):
 
-- When I run `witness_web`
+- When I run `witness`
 - Then a window appears
 - And there is a button named `Continue`
 - And the `Continue` button is enabled
@@ -53,7 +60,6 @@ Milestone 1 — minimal loop, remainder:
 
 | Step | Meaning | Proposal |
 |---|---|---|
-| `When I press the <name> button` | semantic activation of a button | F020 |
 | `Then a <name> dialog eventually appears` | role `dialog`, bounded wait; `alertdialog` same feature | F025 |
 | `the dialog contains a textbox named <name>` | textbox lookup, password naming under discussion (Q022) | F030 |
 | `the <name> textbox has focus` | focus assertion | F030 |

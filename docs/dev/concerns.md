@@ -39,6 +39,7 @@ mark the row `Decided`. A question that no longer matters is marked
 | Q021 | P2 | Web backend: Playwright or WebDriver/BiDi? | Design | Open | — |
 | Q022 | P2 | How is a password field named in the vocabulary? ARIA has no password role; platforms expose a protected text field | Design | Open | — |
 | Q023 | P2 | How does a run select and launch its backend? Strategy pattern with CLI selection is the working position | Design | In progress | [Backend selection and launch](design_discussions.md#backend-selection-and-launch) |
+| Q024 | P2 | A GtkAda4 application registers on the a11y bus as "Unnamed" despite its application id; GuiVerb's GTK backend works around it by pid-based correlation | Design | Open | [forum thread](https://forum.ada-lang.io/t/preview-testing-gtkada4-with-alire-on-ubuntu-26-04/4899) and `~/prj/gtkada4_test` probe |
 
 All open questions are P2 for now: the project is in the
 architectural-exploration phase, and nothing yet blocks a released
