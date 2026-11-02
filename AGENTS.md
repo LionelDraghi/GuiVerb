@@ -1,6 +1,15 @@
 # Instructions for coding agents <!-- omit from toc -->
 
-This file is the entry point for coding agents working on GuiVerb.
+This file is the entry point for agents working on GuiVerb.
+
+- The owner reviews the changes BEFORE staging, and is the only one who
+  approves them.
+- The owner works on the files at the same time as the agent: if a file
+  is modified, the owner made the change; if it is staged, the owner
+  approved it. An agent never overwrites such a file on the grounds
+  that it did not make the changes itself.
+- Use the Ada MCP (Serena), not grep.
+
 
 **Before any other action, read the shared template referenced below
 and follow it.**
