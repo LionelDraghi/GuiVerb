@@ -23,7 +23,7 @@ runner and Web backend implementing them: `src/guiverb_scenario.*`,
 
 | Step | Meaning | Feature |
 |---|---|---|
-| `When I run <app>` | launch the application under test: resolved in `apps/<app>/` — each backend picks its own projection (Web: `index.html`; GTK: `bin/<app>`, run with `GTK_A11Y=atspi`) | F005 |
+| `When I run <app>` | launch the application under test: resolved in `apps/<app>/` — each backend picks its own projection (Web: `index.html`, or `serve` for a server application: the backend spawns it, waits for the URL it reports, and kills it; GTK: `bin/<app>`, run with `GTK_A11Y=atspi`) | F005 |
 | `Then a window appears` | a top-level window exists | F005 |
 | `Then a window named <name> appears` | named variant (window title on the Web backend) | F005 |
 | `And the window contains <text>` | rendered text content of the window subtree | F010 |

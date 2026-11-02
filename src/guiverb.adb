@@ -61,6 +61,20 @@ procedure Guiverb is
          return "";
    end Launched_URL;
 
+   --  The application a run step resolves to: the scenario names it;
+   --  GUIVERB_APP overrides, so one shared scenario suite can target
+   --  any reference application (see the reference-applications
+   --  discussion).
+
+   function Resolved_App (App_Name : String) return String is
+   begin
+      if Ada.Environment_Variables.Exists ("GUIVERB_APP") then
+         return Ada.Environment_Variables.Value ("GUIVERB_APP");
+      else
+         return App_Name;
+      end if;
+   end Resolved_App;
+
    --  Resolve the application name of the run step: look for an
    --  apps/<name> directory in the scenario directory, then in each
    --  parent. The Web projection is index.html; a launcher beside it
@@ -70,11 +84,12 @@ procedure Guiverb is
    function App_URL (Scenario_File, App_Name : String) return String is
       Dir : Unbounded_String := To_Unbounded_String
         (Ada.Directories.Containing_Directory (Scenario_File));
+      Name : constant String := Resolved_App (App_Name);
    begin
       loop
          declare
             App_Dir : constant String := To_String (Dir) & "/apps/"
-              & App_Name;
+              & Name;
          begin
             if Ada.Directories.Exists (App_Dir & "/index.html") then
                return "file://"
@@ -90,12 +105,48 @@ procedure Guiverb is
                then ""
                else Ada.Directories.Containing_Directory (Now));
          begin
-            exit when Parent = To_String (Dir);
+            exit when Now = "/" or else Now = "."
+              or else Parent = Now;
             Dir := To_Unbounded_String (Parent);
          end;
       end loop;
       return "";
    end App_URL;
+
+   --  Resolve a server application: apps/<name>/serve is a launcher
+   --  that reports its URL into /tmp/guiverb-serve.url and then stays
+   --  in the foreground (a Web application that is an HTTP server).
+   --  The runner spawns it, navigates once reported reachable, and
+   --  kills it at the end of the run.
+
+   function App_Server (Scenario_File, App_Name : String) return String is
+      Dir : Unbounded_String := To_Unbounded_String
+        (Ada.Directories.Containing_Directory (Scenario_File));
+      Name : constant String := Resolved_App (App_Name);
+   begin
+      loop
+         declare
+            App_Dir : constant String := To_String (Dir) & "/apps/"
+              & Name;
+         begin
+            if Ada.Directories.Exists (App_Dir & "/serve") then
+               return App_Dir & "/serve";
+            end if;
+         end;
+         declare
+            Now    : constant String := To_String (Dir);
+            Parent : constant String :=
+              (if Now = "/" or else Now = "."
+               then ""
+               else Ada.Directories.Containing_Directory (Now));
+         begin
+            exit when Now = "/" or else Now = "."
+              or else Parent = Now;
+            Dir := To_Unbounded_String (Parent);
+         end;
+      end loop;
+      return "";
+   end App_Server;
 
    --  Resolve the application name of the run step: look for an
    --  apps/<name>/bin/<name> executable in the scenario directory,
@@ -106,16 +157,17 @@ procedure Guiverb is
    function App_Binary (Scenario_File, App_Name : String) return String is
       Dir : Unbounded_String := To_Unbounded_String
         (Ada.Directories.Containing_Directory (Scenario_File));
+      Name : constant String := Resolved_App (App_Name);
    begin
       loop
          declare
             App_Dir : constant String := To_String (Dir) & "/apps/"
-              & App_Name;
+              & Name;
          begin
             if Ada.Directories.Exists
-                 (App_Dir & "/bin/" & App_Name)
+                 (App_Dir & "/bin/" & Name)
             then
-               return App_Dir & "/bin/" & App_Name;
+               return App_Dir & "/bin/" & Name;
             end if;
          end;
          declare
@@ -125,7 +177,8 @@ procedure Guiverb is
                then ""
                else Ada.Directories.Containing_Directory (Now));
          begin
-            exit when Parent = To_String (Dir);
+            exit when Now = "/" or else Now = "."
+              or else Parent = Now;
             Dir := To_Unbounded_String (Parent);
          end;
       end loop;
@@ -142,6 +195,61 @@ procedure Guiverb is
          Driver_Spawned := False;
       end if;
    end Stop_Driver;
+
+   Server         : GNAT.OS_Lib.Process_Id;
+   Server_Spawned : Boolean := False;
+
+   procedure Stop_Server is
+   begin
+      if Server_Spawned then
+         GNAT.OS_Lib.Kill (Server);
+         Server_Spawned := False;
+      end if;
+   end Stop_Server;
+
+   --  Start a server application launcher and return the URL it
+   --  reports (the launcher writes its URL to the serve file first).
+   --  Bounded wait; "" if it never reported.
+
+   function Start_Server (Serve_Script : String) return String is
+      URL_File : constant String := "/tmp/guiverb-serve.url";
+      F        : Ada.Text_IO.File_Type;
+   begin
+      if Ada.Directories.Exists (URL_File) then
+         Ada.Directories.Delete_File (URL_File);
+      end if;
+      Server := GNAT.OS_Lib.Non_Blocking_Spawn
+        (Serve_Script, (1 .. 0 => null));
+      Server_Spawned := True;
+      for Try in 1 .. 100 loop
+         if Ada.Directories.Exists (URL_File) then
+            declare
+               URL : Unbounded_String := Null_Unbounded_String;
+            begin
+               Ada.Text_IO.Open (F, Ada.Text_IO.In_File, URL_File);
+               if not Ada.Text_IO.End_Of_File (F) then
+                  URL := To_Unbounded_String
+                    (Ada.Strings.Fixed.Trim
+                       (Ada.Text_IO.Get_Line (F), Ada.Strings.Both));
+               end if;
+               Ada.Text_IO.Close (F);
+               if URL /= Null_Unbounded_String then
+                  return To_String (URL);
+               end if;
+            exception
+               when others =>
+                  if Ada.Text_IO.Is_Open (F) then
+                     Ada.Text_IO.Close (F);
+                  end if;
+            end;
+         end if;
+         delay 0.1;
+      end loop;
+      return "";
+   exception
+      when others =>
+         return "";
+   end Start_Server;
 
    type Backend_Kind is (Web, GTK);
 
@@ -232,22 +340,29 @@ begin
       File : constant String := To_String (Scenario_File);
       Info : constant Guiverb_Scenario.Parsed :=
         Guiverb_Scenario.Parse (File);
-      URL     : constant String :=
+      Static_URL : constant String :=
         (if Backend = Web
          then App_URL (File, To_String (Info.App_Name))
          else "");
+      Serve_Script : constant String :=
+        (if Backend = Web
+         then App_Server (File, To_String (Info.App_Name))
+         else "");
       --  App resolution is backend-specific: the Web backend wants
-      --  the URL to serve; the GTK backend wants the application
-      --  binary to spawn. Resolving both would run a launcher twice —
-      --  and, for an application that keeps running, deadlock the
-      --  blocking URL capture.
+      --  the URL to serve; a server application reports it when its
+      --  launcher starts; the GTK backend wants the application
+      --  binary to spawn. Resolving more than one kind would run a
+      --  launcher twice — and, for an application that keeps
+      --  running, deadlock the blocking URL capture.
+      URL     : Unbounded_String := To_Unbounded_String (Static_URL);
       Binary  : constant String :=
         App_Binary (File, To_String (Info.App_Name));
    begin
       Wait_For_User
         ("next step: When I run `" & To_String (Info.App_Name) & "`");
 
-      if (Backend = Web and then URL = "")
+      if (Backend = Web and then Static_URL = ""
+          and then Serve_Script = "")
         or else (Backend = GTK and then Binary = "")
       then
          Put_Line (Standard_Error, "no application '"
@@ -369,11 +484,36 @@ begin
                end if;
             end Preview;
 
+            type Condition is access function return Boolean;
+
+            --  A Web application can build its DOM after navigation
+            --  (server-launched ones do): each observation polls until
+            --  it holds or the harness deadline passes. The
+            --  'eventually' timing is configuration, not scenario
+            --  vocabulary.
+
+            function Eventually (Holds : Condition) return Boolean is
+               OK : Boolean := Holds.all;
+            begin
+               for Try in 1 .. 50 loop
+                  OK := Holds.all;
+                  exit when OK;
+                  delay 0.1;
+               end loop;
+               return OK;
+            end Eventually;
+
             procedure Check_Window (Expected : String) is
+               function Holds return Boolean is
+               begin
+                  return Expected = ""
+                    or else Guiverb_WebDriver.Title (Session_Id.all)
+                              = Expected;
+               end Holds;
                Actual_Title : constant String :=
                  Guiverb_WebDriver.Title (Session_Id.all);
             begin
-               if Expected /= "" and then Actual_Title /= Expected then
+               if not Eventually (Holds'Unrestricted_Access) then
                   Put_Line (Standard_Error,
                             "FAIL: a window appears, but its title is """
                             & Actual_Title & """, expected """
@@ -386,10 +526,16 @@ begin
             end Check_Window;
 
             procedure Check_Contains (Expected : String) is
+               function Holds return Boolean is
+               begin
+                  return Ada.Strings.Fixed.Index
+                           (Guiverb_WebDriver.Text (Session_Id.all),
+                            Expected) /= 0;
+               end Holds;
                Actual_Text : constant String :=
                  Guiverb_WebDriver.Text (Session_Id.all);
             begin
-               if Ada.Strings.Fixed.Index (Actual_Text, Expected) = 0 then
+               if not Eventually (Holds'Unrestricted_Access) then
                   Put_Line (Standard_Error,
                             "FAIL: the window does not contain """
                             & Expected & """; the window text is: """
@@ -402,10 +548,13 @@ begin
             end Check_Contains;
 
             procedure Check_Button (Expected : String) is
-               Element : constant String :=
-                 Guiverb_WebDriver.Find (Session_Id.all, "button", Expected);
+               function Holds return Boolean is
+               begin
+                  return Guiverb_WebDriver.Find
+                           (Session_Id.all, "button", Expected) /= "";
+               end Holds;
             begin
-               if Element = "" then
+               if not Eventually (Holds'Unrestricted_Access) then
                   Put_Line (Standard_Error,
                             "FAIL: there is no button named """
                             & Expected & """");
@@ -422,16 +571,28 @@ begin
                Element : constant String :=
                  Guiverb_WebDriver.Find (Session_Id.all, "button", Expected);
                Is_Enabled : Boolean := False;
+
+               function Holds return Boolean is
+               begin
+                  return Element /= ""
+                    and then (Wanted = Guiverb_Scenario.Button_Enabled_Step)
+                                = Guiverb_WebDriver.Enabled
+                                    (Session_Id.all, Element);
+               end Holds;
             begin
-               if Element = "" then
+               if Element /= "" then
+                  Is_Enabled :=
+                    Guiverb_WebDriver.Enabled (Session_Id.all, Element);
+               elsif not Eventually (Holds'Unrestricted_Access) then
                   Put_Line (Standard_Error,
                             "FAIL: there is no button named """
                             & Expected & """");
                   Failed := True;
                   return;
+               else
+                  Is_Enabled :=
+                    (Wanted = Guiverb_Scenario.Button_Enabled_Step);
                end if;
-               Is_Enabled :=
-                 Guiverb_WebDriver.Enabled (Session_Id.all, Element);
                if (Wanted = Guiverb_Scenario.Button_Enabled_Step)
                     = Is_Enabled
                then
@@ -447,16 +608,23 @@ begin
             end Check_Button_State;
 
             procedure Do_Press (Expected : String) is
-               Element : constant String :=
-                 Guiverb_WebDriver.Find (Session_Id.all, "button", Expected);
+
+               function Holds return Boolean is
+               begin
+                  return Guiverb_WebDriver.Find
+                           (Session_Id.all, "button", Expected) /= "";
+               end Holds;
             begin
-               if Element = "" then
+               if not Eventually (Holds'Unrestricted_Access) then
                   Put_Line (Standard_Error,
                             "FAIL: there is no button named """
                             & Expected & """ to press");
                   Failed := True;
                else
-                  Guiverb_WebDriver.Click (Session_Id.all, Element);
+                  Guiverb_WebDriver.Click
+                    (Session_Id.all,
+                     Guiverb_WebDriver.Find
+                       (Session_Id.all, "button", Expected));
                   Put_Line ("OK: the """ & Expected
                             & """ button is pressed");
                end if;
@@ -464,9 +632,67 @@ begin
 
       begin
          if Backend = Web then
+            --  A server application starts after the driver is ready;
+            --  the application reports its URL, then the run navigates
+            --  with a bounded retry: a server-built DOM is only
+            --  connectable once the server is up (and, for a Gnoga
+            --  application, the DOM is built once the socket is).
+
+            if Length (URL) = 0 then
+               declare
+                  Reported : constant String :=
+                    Start_Server (Serve_Script);
+               begin
+                  if Reported = "" then
+                     Put_Line (Standard_Error,
+                               "FAIL: the application launcher never "
+                               & "reported its URL");
+                     Stop_Driver;
+                     Stop_Server;
+                     Set_Exit_Status (Failure);
+                     return;
+                  end if;
+                  URL := To_Unbounded_String (Reported);
+               end;
+            end if;
+
             Session_Id := new String'
               (Guiverb_WebDriver.New_Session (Headed));
-            Guiverb_WebDriver.Navigate (Session_Id.all, URL);
+
+            declare
+               Reached : Boolean := False;
+            begin
+               for Try in 1 .. 50 loop
+                  begin
+                     Guiverb_WebDriver.Navigate
+                       (Session_Id.all, To_String (URL));
+                     Reached := True;
+                     exit;
+                  exception
+                     when Guiverb_WebDriver.Request_Failed
+                        | Guiverb_WebDriver.Driver_Unreachable
+                     =>
+                        delay 0.2;
+                  end;
+               end loop;
+               if not Reached then
+                  raise Guiverb_WebDriver.Request_Failed
+                    with "the application URL never became reachable: "
+                    & To_String (URL);
+               end if;
+
+               --  A server application builds its DOM only once the
+               --  browser socket is connected; wait for its readiness
+               --  signal — a non-empty document title — before any
+               --  observation, within the harness deadline.
+
+               if Server_Spawned then
+                  for Try in 1 .. 50 loop
+                     exit when Guiverb_WebDriver.Title (Session_Id.all) /= "";
+                     delay 0.1;
+                  end loop;
+               end if;
+            end;
          end if;
 
          for C in Info.Steps.Iterate loop
@@ -543,6 +769,7 @@ begin
             Guiverb_WebDriver.Delete_Session (Session_Id.all);
             GNAT.OS_Lib.Free (Session_Id);
             Stop_Driver;
+            Stop_Server;
          else
             Guiverb_ATSPI.Shutdown;
          end if;
@@ -564,6 +791,7 @@ begin
                Guiverb_ATSPI.Shutdown;
             else
                Stop_Driver;
+               Stop_Server;
             end if;
             Set_Exit_Status (Failure);
       end;
@@ -579,9 +807,11 @@ exception
    when User_Abort =>
       Guiverb_ATSPI.Shutdown;
       Stop_Driver;
+      Stop_Server;
       Set_Exit_Status (Failure);
    when others =>
       Guiverb_ATSPI.Shutdown;
       Stop_Driver;
+      Stop_Server;
       raise;
 end Guiverb;

@@ -9,6 +9,7 @@ material risk.
 |---|---|---|
 | Backend selection and launch | Discussing | 2026-10-30 |
 | Web driver for the minimal loop | Accepted | 2026-10-30 |
+| Application resolution and server applications | Accepted | 2026-11-02 |
 | <title> | Discussing | YYYY-MM-DD |
 
 Statuses: Discussing | Accepted | Rejected | Superseded.
@@ -156,3 +157,63 @@ Open while Discussing. Working position: strategy pattern, CLI
 selection, backend-owned launch; the scenario keeps only application
 vocabulary. `Given I run` stays available for application
 preconditions, as in bbt.
+
+### Application resolution and server applications
+
+Status: Accepted
+Date: 2026-11-02
+Related: concern Q023, proposal `docs/proposed/reference_apps.md`,
+`apps/witness_gnoga/`
+
+## Context
+
+The suite's scenarios invoke a stable application name; the runner
+resolves it. With a second reference application — witness_gnoga, a
+long-running HTTP server tested by the Web backend — a run must (1)
+select the application instance the suite targets, (2) launch a server
+application whose DOM is built only after the browser socket
+connects, and (3) clean it up.
+
+## Options considered
+
+### Wrapper inside the scenario
+
+- Benefits: no runner change.
+- Costs and risks: per-application wrappers for every user (the suite
+  is not just the reference apps), and a scenario that depends on
+  files outside `apps/`.
+
+### Resolution by the runner, override by environment
+
+- Benefits: the scenario stays `When I run <app>`; the runner walks up
+  the directories to `apps/<name>/` and picks the projection per
+  backend — Web: `index.html`, GTK: `bin/<name>`; `GUIVERB_APP`
+  overrides the name, so `make check-gnoga` runs the same suite
+  against another instance; a `serve` launcher beside the app makes a
+  server application first-class: the runner spawns it, waits for the
+  URL it reports, kills it with the rest of the chain.
+- Costs and risks: one more launcher contract (`serve`) to document;
+  observations must tolerate a DOM built after navigation, which the
+  web checks now poll for within the harness deadline ('eventually'
+  timing stays configuration, not scenario vocabulary).
+
+## Decision
+
+Resolution by the runner: `apps/<name>/` with per-backend
+projections, `GUIVERB_APP` to override the instance, and `serve` for
+server applications. No wrapper in the scenario path, and bbt-style
+`Given I run` remains available for application preconditions.
+
+## Consequences
+
+- The second web reference application folds into the same suite
+  (S001 unchanged: no new steps, no framework reference).
+- `make check-gnoga` runs the shared suite against `witness_gnoga`
+  (`apps/witness_gnoga/` below the application's README for its
+  prerequisites and automation notes).
+- The Web chain gained bounded-settle polling on every observation —
+  the harness timing is a configuration default (deadline), reused by
+  F025's `eventually` wording when that lands.
+- The directory-walk rule near the root is fixed (it used to leave at
+  `""` and raise `Name_Error` on elements found after the last
+  candidate).

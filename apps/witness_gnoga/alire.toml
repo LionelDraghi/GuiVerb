@@ -1,0 +1,18 @@
+name = "guiverb_witness_gnoga"
+description = "GuiVerb reference application (Gnoga projection)"
+version = "0.1.0-dev"
+
+authors = ["Lionel Draghi"]
+maintainers = ["Lionel Draghi <lionel.draghi@free.fr>"]
+maintainers-logins = ["LionelDraghi"]
+licenses = "MIT OR Apache-2.0 WITH LLVM-exception"
+website = "https://github.com/LionelDraghi/GuiVerb"
+tags = ["gui", "web", "test"]
+
+executables = ["witness_gnoga"]
+
+[configuration]
+generate_C = false
+
+[[depends-on]]
+gnoga = "^2.2.3"

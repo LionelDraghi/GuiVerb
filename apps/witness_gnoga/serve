@@ -1,0 +1,17 @@
+#!/bin/sh
+# -----------------------------------------------------------------------------
+# GuiVerb (https://github.com/LionelDraghi/GuiVerb)
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026, Lionel Draghi
+# -----------------------------------------------------------------------------
+# Server application launcher for the Gnoga witness projection. The
+# runner (Web backend) spawns this script for applications that are
+# long-running HTTP servers, waits for the URL file it prints
+# (/tmp/guiverb-serve.url), navigates, and kills the script's process
+# at the end of the run — because of the exec below, that process is
+# the application server itself.
+
+apps_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+
+printf 'http://127.0.0.1:8080/boot.html\n' > /tmp/guiverb-serve.url
+exec "$apps_dir/bin/witness_gnoga"
