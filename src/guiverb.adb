@@ -199,7 +199,7 @@ begin
                Expected_Text : constant String :=
                  To_String (Info.Window_Text);
                Actual_Text : Unbounded_String := Null_Unbounded_String;
-               Text_Failed : Boolean := False;
+               Failed : Boolean := False;
 
                function Preview (Text : String) return String is
                   Max : constant := 200;
@@ -212,26 +212,85 @@ begin
                   end if;
                end Preview;
             begin
-               if not Title_Failed and then Expected_Text /= "" then
-                  Actual_Text := To_Unbounded_String
-                    (Guiverb_WebDriver.Text (Session_Id));
-                  Text_Failed := Ada.Strings.Fixed.Index
-                    (To_String (Actual_Text), Expected_Text) = 0;
-               end if;
-
                if Title_Failed then
                   Put_Line (Standard_Error,
                             "FAIL: a window appears, but its title is """
                             & Actual_Title & """, expected """
                             & To_String (Info.Window_Name) & """");
-                  Set_Exit_Status (Failure);
-               elsif Text_Failed then
-                  Put_Line (Standard_Error,
-                            "FAIL: the window does not contain """
-                            & Expected_Text & """; the window text is: """
-                            & Preview (To_String (Actual_Text)) & """");
-                  Set_Exit_Status (Failure);
-               else
+                  Failed := True;
+               elsif Expected_Text /= "" then
+                  Actual_Text := To_Unbounded_String
+                    (Guiverb_WebDriver.Text (Session_Id));
+                  if Ada.Strings.Fixed.Index
+                       (To_String (Actual_Text), Expected_Text) = 0
+                  then
+                     Put_Line (Standard_Error,
+                               "FAIL: the window does not contain """
+                               & Expected_Text
+                               & """; the window text is: """
+                               & Preview (To_String (Actual_Text)) & """");
+                     Failed := True;
+                  end if;
+               end if;
+
+               --  F015: button lookup by role + accessible name, then
+               --  enabled-state assertion on the found element.
+
+               if not Failed
+                 and then To_String (Info.Button_Name) /= ""
+               then
+                  declare
+                     Expected_Button : constant String :=
+                       To_String (Info.Button_Name);
+                     Element : constant String :=
+                       Guiverb_WebDriver.Find
+                         (Session_Id, "button", Expected_Button);
+                  begin
+                     if Element = "" then
+                        Put_Line (Standard_Error,
+                                  "FAIL: there is no button named """
+                                  & Expected_Button & """");
+                        Failed := True;
+                     else
+                        Put_Line ("OK: there is a button named """
+                                  & Expected_Button & """");
+                        case Info.Button_Enabled is
+                           when Guiverb_Scenario.None =>
+                              null;
+                           when Guiverb_Scenario.Asserted_Enabled =>
+                              if Guiverb_WebDriver.Enabled
+                                   (Session_Id, Element)
+                              then
+                                 Put_Line ("OK: the """
+                                           & Expected_Button
+                                           & """ button is enabled");
+                              else
+                                 Put_Line (Standard_Error,
+                                           "FAIL: the """
+                                           & Expected_Button
+                                           & """ button is disabled");
+                                 Failed := True;
+                              end if;
+                           when Guiverb_Scenario.Asserted_Disabled =>
+                              if Guiverb_WebDriver.Enabled
+                                   (Session_Id, Element)
+                              then
+                                 Put_Line (Standard_Error,
+                                           "FAIL: the """
+                                           & Expected_Button
+                                           & """ button is enabled");
+                                 Failed := True;
+                              else
+                                 Put_Line ("OK: the """
+                                           & Expected_Button
+                                           & """ button is disabled");
+                              end if;
+                        end case;
+                     end if;
+                  end;
+               end if;
+
+               if not Failed then
                   Put_Line ("OK: a window appears (title """
                             & Actual_Title & """)");
                   if Expected_Text /= "" then
@@ -239,6 +298,8 @@ begin
                                & Expected_Text & """");
                   end if;
                   Set_Exit_Status (Success);
+               else
+                  Set_Exit_Status (Failure);
                end if;
 
                Wait_For_User

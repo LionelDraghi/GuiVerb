@@ -31,6 +31,16 @@ package Guiverb_WebDriver is
    --  backend: the text of the document body; how the body is located
    --  stays backend-private.
 
+   function Find
+     (Session_Id : String; Role, Name : String) return String;
+   --  Resolve role + accessible name to an element reference (F015),
+   --  or "" when no element matches. The role+name to locator mapping
+   --  stays backend-private; only the button role is mapped for now.
+
+   function Enabled (Session_Id : String; Element_Id : String) return Boolean;
+   --  The enabled state of the element: user-visible state, not an
+   --  attribute value (F015).
+
    procedure Delete_Session (Session_Id : String);
 
 end Guiverb_WebDriver;

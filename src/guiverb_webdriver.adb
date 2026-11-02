@@ -284,6 +284,75 @@ package body Guiverb_WebDriver is
       return Value_Of (To_String (Response), "value");
    end Text;
 
+   --  The W3C element reference key in a find-element response starts
+   --  with "element-"; extract the full key, then its value.
+
+   function Element_Id_Of (JSON : String) return String is
+   begin
+      for I in JSON'First .. JSON'Last - 9 loop
+         if JSON (I) = '"'
+           and then JSON (I + 1 .. I + 8) = "element-"
+         then
+            declare
+               Key_End : Natural := I + 1;
+            begin
+               while JSON (Key_End) /= '"' loop
+                  Key_End := Key_End + 1;
+               end loop;
+               return Value_Of (JSON, JSON (I + 1 .. Key_End - 1));
+            end;
+         end if;
+      end loop;
+      return "";
+   end Element_Id_Of;
+
+   function Find
+     (Session_Id : String; Role, Name : String) return String
+   is
+      Status   : Natural;
+      Response : Unbounded_String;
+      --  Accessible name per accname: element content or aria-label.
+      --  Exact match (Q011 open); the selector stays backend-private.
+      Locator  : constant String :=
+        "//" & "button[normalize-space()='" & Name
+        & "' or @aria-label='" & Name & "'] | "
+        & "//*[@role='button' and (normalize-space()='" & Name
+        & "' or @aria-label='" & Name & "')]";
+      Body_Text : constant String :=
+        "{""using"":""xpath"",""value"":""" & Locator & """}";
+   begin
+      if Role /= "button" then
+         raise Request_Failed
+         with "role not supported by this backend: " & Role;
+      end if;
+      HTTP ("POST", "/session/" & Session_Id & "/element", Body_Text,
+            Status, Response);
+      if Status = 404 then
+         return "";
+      elsif Status not in 200 | 201 then
+         raise Request_Failed
+         with "element lookup failed (status" & Status'Image & ")";
+      end if;
+      return Element_Id_Of (To_String (Response));
+   end Find;
+
+   function Enabled (Session_Id : String; Element_Id : String) return Boolean
+   is
+      Status   : Natural;
+      Response : Unbounded_String;
+   begin
+      HTTP ("GET",
+            "/session/" & Session_Id & "/element/" & Element_Id
+            & "/enabled",
+            "", Status, Response);
+      if Status not in 200 | 201 then
+         raise Request_Failed
+         with "enabled state retrieval failed (status"
+              & Status'Image & ")";
+      end if;
+      return Value_Of (To_String (Response), "value") = "true";
+   end Enabled;
+
    procedure Delete_Session (Session_Id : String) is
       Status   : Natural;
       Response : Unbounded_String;

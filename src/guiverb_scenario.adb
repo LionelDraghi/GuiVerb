@@ -81,6 +81,45 @@ package body Guiverb_Scenario is
                      Result.Has_Window := True;
                      Result.Window_Name := To_Unbounded_String (Name);
                   end;
+               elsif Ada.Strings.Fixed.Index
+                       (Line, "there is a button named") > 0
+               then
+                  declare
+                     Name : constant String := Backticked (Line);
+                  begin
+                     if Name = "" then
+                        raise Parse_Error
+                        with "button step without name: " & Line;
+                     elsif Result.Button_Name /= Null_Unbounded_String then
+                        raise Parse_Error
+                        with "two button steps in one scenario";
+                     end if;
+                     Result.Button_Name := To_Unbounded_String (Name);
+                  end;
+               elsif Ada.Strings.Fixed.Index (Line, "button is enabled") > 0
+                     or else Ada.Strings.Fixed.Index
+                               (Line, "button is disabled") > 0
+               then
+                  declare
+                     Name : constant String := Backticked (Line);
+                  begin
+                     if Name = "" then
+                        raise Parse_Error
+                        with "button state step without name: " & Line;
+                     end if;
+                     if Result.Button_Name /= Null_Unbounded_String
+                       and then To_String (Result.Button_Name) /= Name
+                     then
+                        raise Parse_Error
+                        with "button state step on another button: " & Line;
+                     end if;
+                     Result.Button_Name := To_Unbounded_String (Name);
+                     Result.Button_Enabled :=
+                       (if Ada.Strings.Fixed.Index
+                              (Line, "button is disabled") > 0
+                        then Asserted_Disabled
+                        else Asserted_Enabled);
+                  end;
                elsif Ada.Strings.Fixed.Index (Line, "the window contains") > 0
                then
                   declare
