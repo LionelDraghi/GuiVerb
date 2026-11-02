@@ -1,10 +1,10 @@
---  ---------------------------------------------------------------------------
 --  GuiVerb (https://github.com/LionelDraghi/GuiVerb)
 --  SPDX-License-Identifier: Apache-2.0
 --  SPDX-FileCopyrightText: 2026, Lionel Draghi
 --  ---------------------------------------------------------------------------
 
 with Ada.Calendar;          use Ada.Calendar;
+with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with GNAT.OS_Lib;
@@ -17,6 +17,7 @@ package body Guiverb_ATSPI is
    App_Pid         : GNAT.OS_Lib.Process_Id;
    Target_Pid      : Integer := 0;
    Observed        : Unbounded_String := Null_Unbounded_String;
+   Last_Text       : Unbounded_String := Null_Unbounded_String;
 
    use type GNAT.OS_Lib.Process_Id;
    use type System.Address;
@@ -49,6 +50,32 @@ package body Guiverb_ATSPI is
    pragma Import (C, Atspi_Accessible_Get_Process_Id,
                      "atspi_accessible_get_process_id");
 
+   function Atspi_Accessible_Get_Role
+     (Obj : System.Address; Error : System.Address) return int;
+   pragma Import (C, Atspi_Accessible_Get_Role,
+                     "atspi_accessible_get_role");
+
+   function Atspi_Accessible_Get_State_Set
+     (Obj : System.Address) return System.Address;
+   pragma Import (C, Atspi_Accessible_Get_State_Set,
+                     "atspi_accessible_get_state_set");
+
+   --  AtspiState values (Atspi-2.0 enum, verified by introspection):
+   --  ENABLED = 8; GTK 4 never emits it, see the .ads mapping note;
+   --  SENSITIVE = 24 is GTK 4's user-visible "enabled" state.
+
+   Role_Push_Button : constant int := 43;
+   State_Sensitive  : constant int := 24;
+
+   function Atspi_State_Set_Contains
+     (Set : System.Address; State : int) return int;
+   pragma Import (C, Atspi_State_Set_Contains, "atspi_state_set_contains");
+
+   function Atspi_Action_Do_Action
+     (Obj : System.Address; Index : int; Error : System.Address)
+     return int;
+   pragma Import (C, Atspi_Action_Do_Action, "atspi_action_do_action");
+
    procedure G_Object_Unref (Obj : System.Address);
    pragma Import (C, G_Object_Unref, "g_object_unref");
 
@@ -76,15 +103,15 @@ package body Guiverb_ATSPI is
       end;
    end C_String_Of;
 
-   --  Walk the desktop tree looking for a window of the launched
-   --  application: correlation by process id only (correlation
-   --  policy, minimal form).
+   --  The application's window frame: a window of the process the
+   --  backend launched (correlation by pid), optionally title-matched.
+   --  The caller owns the returned reference.
 
-   function Scan_For_Window (Expected_Title : String) return Boolean is
+   function Window_Of (Expected_Title : String) return System.Address is
       Desktop : constant System.Address := Atspi_Get_Desktop (0);
    begin
       if Desktop = System.Null_Address then
-         return False;
+         return System.Null_Address;
       end if;
       for A in 1 .. Atspi_Accessible_Get_Child_Count (Desktop) loop
          declare
@@ -104,22 +131,16 @@ package body Guiverb_ATSPI is
                          (App, int (W - 1));
                   begin
                      if Frame /= System.Null_Address then
-                        declare
-                           Name : constant String :=
-                             C_String_Of
-                               (Atspi_Accessible_Get_Name
-                                  (Frame, System.Null_Address));
-                        begin
-                           if Expected_Title = ""
-                             or else Name = Expected_Title
-                           then
-                              Observed := To_Unbounded_String (Name);
-                              G_Object_Unref (Frame);
-                              G_Object_Unref (App);
-                              return True;
-                           end if;
-                           G_Object_Unref (Frame);
-                        end;
+                        if Expected_Title = ""
+                          or else C_String_Of
+                                    (Atspi_Accessible_Get_Name
+                                       (Frame, System.Null_Address))
+                              = Expected_Title
+                        then
+                           G_Object_Unref (App);
+                           return Frame;
+                        end if;
+                        G_Object_Unref (Frame);
                      end if;
                   end;
                end loop;
@@ -129,7 +150,73 @@ package body Guiverb_ATSPI is
             end if;
          end;
       end loop;
-      return False;
+      return System.Null_Address;
+   end Window_Of;
+
+   --  Depth-first search for a push button named Name. The caller
+   --  owns the returned reference; every visited node is unref'd.
+
+   function Find_Button_Named
+     (Obj : System.Address; Name : String) return System.Address
+   is
+      Child, Found : System.Address;
+   begin
+      if Obj = System.Null_Address then
+         return System.Null_Address;
+      end if;
+      for C in 1 .. Atspi_Accessible_Get_Child_Count (Obj) loop
+         Child := Atspi_Accessible_Get_Child_At_Index (Obj, int (C - 1));
+         if Child /= System.Null_Address then
+            if Atspi_Accessible_Get_Role (Child, System.Null_Address)
+                 = Role_Push_Button
+              and then C_String_Of
+                         (Atspi_Accessible_Get_Name
+                            (Child, System.Null_Address)) = Name
+            then
+               return Child;
+            end if;
+            Found := Find_Button_Named (Child, Name);
+            G_Object_Unref (Child);
+            if Found /= System.Null_Address then
+               return Found;
+            end if;
+         end if;
+      end loop;
+      return System.Null_Address;
+   end Find_Button_Named;
+
+   --  The window's rendered text content: the accessible names of the
+   --  window subtree (GTK 4 labels carry their text as accessible
+   --  name). The root reference belongs to the caller.
+
+   function Gather_Text (Obj : System.Address) return String is
+      Text : Unbounded_String := To_Unbounded_String
+        (C_String_Of (Atspi_Accessible_Get_Name (Obj, System.Null_Address)));
+   begin
+      for C in 1 .. Atspi_Accessible_Get_Child_Count (Obj) loop
+         declare
+            Child : constant System.Address :=
+              Atspi_Accessible_Get_Child_At_Index (Obj, int (C - 1));
+         begin
+            if Child /= System.Null_Address then
+               Append (Text, " " & Gather_Text (Child));
+               G_Object_Unref (Child);
+            end if;
+         end;
+      end loop;
+      return To_String (Text);
+   end Gather_Text;
+
+   function Scan_For_Window (Expected_Title : String) return Boolean is
+      Frame : constant System.Address := Window_Of (Expected_Title);
+   begin
+      if Frame = System.Null_Address then
+         return False;
+      end if;
+      Observed := To_Unbounded_String
+        (C_String_Of (Atspi_Accessible_Get_Name (Frame, System.Null_Address)));
+      G_Object_Unref (Frame);
+      return True;
    end Scan_For_Window;
 
    procedure Launch (Binary_Path : String) is
@@ -165,6 +252,108 @@ package body Guiverb_ATSPI is
    begin
       return To_String (Observed);
    end Observed_Title;
+
+   --  The steps below poll the accessibility tree within the harness
+   --  deadline: the application window appears, then its subtree
+   --  builds, and a previous step may still be propagating.
+
+   function Window_Contains (Expected : String) return Boolean is
+      Deadline : constant Time := Clock + 6.0;
+      Frame    : System.Address;
+   begin
+      Last_Text := Null_Unbounded_String;
+      while Clock < Deadline loop
+         Frame := Window_Of ("");
+         if Frame /= System.Null_Address then
+            declare
+               Text : constant String := Gather_Text (Frame);
+            begin
+               G_Object_Unref (Frame);
+               Last_Text := To_Unbounded_String (Text);
+               if Ada.Strings.Fixed.Index (Text, Expected) /= 0 then
+                  return True;
+               end if;
+            end;
+         end if;
+         delay 0.2;
+      end loop;
+      return False;
+   end Window_Contains;
+
+   function Observed_Text return String is
+   begin
+      return To_String (Last_Text);
+   end Observed_Text;
+
+   function Button_Named (Name : String) return Boolean is
+      Deadline : constant Time := Clock + 6.0;
+      Frame    : System.Address;
+      Button   : System.Address;
+   begin
+      while Clock < Deadline loop
+         Frame := Window_Of ("");
+         if Frame /= System.Null_Address then
+            Button := Find_Button_Named (Frame, Name);
+            G_Object_Unref (Frame);
+            if Button /= System.Null_Address then
+               G_Object_Unref (Button);
+               return True;
+            end if;
+         end if;
+         delay 0.2;
+      end loop;
+      return False;
+   end Button_Named;
+
+   function Button_Enabled (Name : String) return Boolean is
+      Deadline : constant Time := Clock + 6.0;
+      Frame    : System.Address;
+      Button   : System.Address;
+      Enabled  : Boolean := False;
+   begin
+      while Clock < Deadline loop
+         Frame := Window_Of ("");
+         if Frame /= System.Null_Address then
+            Button := Find_Button_Named (Frame, Name);
+            G_Object_Unref (Frame);
+            if Button /= System.Null_Address then
+               Enabled := Atspi_State_Set_Contains
+                            (Atspi_Accessible_Get_State_Set (Button),
+                             State_Sensitive) /= 0;
+               G_Object_Unref (Button);
+               return Enabled;
+            end if;
+         end if;
+         delay 0.2;
+      end loop;
+      return False;
+   end Button_Enabled;
+
+   function Press_Button (Name : String) return Boolean is
+      Deadline : constant Time := Clock + 6.0;
+      Frame    : System.Address;
+      Button   : System.Address;
+   begin
+      while Clock < Deadline loop
+         Frame := Window_Of ("");
+         if Frame /= System.Null_Address then
+            Button := Find_Button_Named (Frame, Name);
+            G_Object_Unref (Frame);
+            if Button /= System.Null_Address then
+               declare
+                  Done : constant Boolean :=
+                    Atspi_Action_Do_Action
+                      (Button, 0, System.Null_Address) /= 0;
+               begin
+                  G_Object_Unref (Button);
+                  return Done;
+               end;
+            end if;
+         end if;
+         delay 0.2;
+      end loop;
+      return False;
+   end Press_Button;
 
    procedure Shutdown is
       Status  : GNAT.OS_Lib.Process_Id;

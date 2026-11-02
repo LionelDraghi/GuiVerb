@@ -18,8 +18,8 @@ not yet implemented, listed in their proposal's own wording.
 ## Implemented
 
 Executable today against the reference applications (`apps/`). The
-runner and Web backend implementing them: `src/guiverb_scenario.*`,
-`src/guiverb_webdriver.*`.
+runner and the backends implementing them: `src/guiverb_scenario.*`,
+`src/guiverb_webdriver.*` (Web), `src/guiverb_atspi.*` (GTK/AT-SPI).
 
 | Step | Meaning | Feature |
 |---|---|---|

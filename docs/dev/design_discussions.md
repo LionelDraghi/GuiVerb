@@ -10,6 +10,7 @@ material risk.
 | Backend selection and launch | Discussing | 2026-10-30 |
 | Web driver for the minimal loop | Accepted | 2026-10-30 |
 | Application resolution and server applications | Accepted | 2026-11-02 |
+| GTK enabled state and window text over AT-SPI | Accepted | 2026-11-02 |
 | <title> | Discussing | YYYY-MM-DD |
 
 Statuses: Discussing | Accepted | Rejected | Superseded.
@@ -217,3 +218,51 @@ server applications. No wrapper in the scenario path, and bbt-style
 - The directory-walk rule near the root is fixed (it used to leave at
   `""` and raise `Name_Error` on elements found after the last
   candidate).
+
+### GTK enabled state and window text over AT-SPI
+
+Status: Accepted
+Date: 2026-11-02
+Related: concern Q024, F010, F015, F020, `src/guiverb_atspi.*`
+
+## Context
+
+The GTK4 backend needs the enabled state of a widget (F015), the
+rendered text content of a window (F010), and a semantic press
+(F020). The evidence comes from the live application's AT-SPI tree.
+
+## Options considered
+
+### Strict AT-SPI conformance (enabled = STATE_ENABLED and STATE_SENSITIVE)
+
+- Benefits: the mapping follows the AT-SPI spec.
+- Costs and risks: GTK 4 never emits STATE_ENABLED (observed on the
+  reference application: frame, buttons, labels carry SENSITIVE
+  only), so every interactive widget would read as disabled — the
+  scenario would contradict the user-visible state it is written to
+  protect.
+
+### User-visible state (enabled = STATE_SENSITIVE)
+
+- Benefits: the scenario states what the user sees; the same step
+  reads enabled/disabled correctly on GTK 4.
+- Costs and risks: a backend-specific mapping note; if a later
+  backend exposes ENABLED differently, the mapping stays per-backend
+  (the semantic stays user-visible enabled, the implementation is
+  the backend's business).
+
+## Decision
+
+User-visible state: enabled = STATE_SENSITIVE on the GTK chain.
+Window text content = the accessible names gathered over the window
+subtree (GTK 4 labels carry their text as accessible name; the
+AT-SPI Text interface is not used today). Press = the AT-SPI
+semantic action (`click`, `do_action(0)`) — exactly the semantic
+action layer S003/F020 protect, not injected input.
+
+## Consequences
+
+- F010-F020 pass on the GTK chain; `make check-gtk` is green.
+- The mapping notes are per-backend by construction and recorded in
+  the conformance matrix; Q024 ("Unnamed" application node) stays
+  open, the backend correlates by process id.

@@ -448,6 +448,16 @@ begin
             --  window (correlation by process id). Actions and text
             --  assertions come with the next GTK increments.
 
+            function Preview (Text : String) return String is
+               Max : constant := 200;
+            begin
+               if Text'Length <= Max then
+                  return Text;
+               else
+                  return Text (Text'First .. Text'First + Max - 1) & "...";
+               end if;
+            end Preview;
+
             procedure Check_Window_Atspi (Expected : String) is
                Ok : constant Boolean :=
                  Guiverb_ATSPI.Window_Appears (Expected);
@@ -465,24 +475,75 @@ begin
                   Failed := True;
                end if;
             end Check_Window_Atspi;
+            --  Fail_Unsupported stays for the GTK increments actually
+            --  not implemented (F025 and on).
 
-            procedure Fail_Unsupported (What : String) is
+            procedure Check_Contains_Atspi (Expected : String) is
+               Ok : constant Boolean :=
+                 Guiverb_ATSPI.Window_Contains (Expected);
             begin
-               Put_Line (Standard_Error,
-                         "FAIL: """ & What & """ has no GTK backend"
-                         & " implementation yet");
-               Failed := True;
-            end Fail_Unsupported;
-
-            function Preview (Text : String) return String is
-               Max : constant := 200;
-            begin
-               if Text'Length <= Max then
-                  return Text;
+               if Ok then
+                  Put_Line ("OK: the window contains """
+                            & Expected & """");
                else
-                  return Text (Text'First .. Text'First + Max - 1) & "...";
+                  Put_Line (Standard_Error,
+                            "FAIL: the window does not contain """
+                            & Expected & """; the window text is: """
+                            & Preview (Guiverb_ATSPI.Observed_Text)
+                            & """");
+                  Failed := True;
                end if;
-            end Preview;
+            end Check_Contains_Atspi;
+
+            procedure Check_Button_Atspi (Expected : String) is
+               Ok : constant Boolean :=
+                 Guiverb_ATSPI.Button_Named (Expected);
+            begin
+               if Ok then
+                  Put_Line ("OK: there is a button named """
+                            & Expected & """");
+               else
+                  Put_Line (Standard_Error,
+                            "FAIL: there is no button named """
+                            & Expected & """");
+                  Failed := True;
+               end if;
+            end Check_Button_Atspi;
+
+            procedure Check_Button_State_Atspi
+              (Expected : String; Wanted : Guiverb_Scenario.Step_Kind)
+            is
+               Enabled_State : constant Boolean :=
+                 Guiverb_ATSPI.Button_Enabled (Expected);
+            begin
+               if (Wanted = Guiverb_Scenario.Button_Enabled_Step)
+                    = Enabled_State
+               then
+                  Put_Line ("OK: the """ & Expected & """ button is "
+                            & (if Wanted = Guiverb_Scenario.Button_Enabled_Step
+                               then "enabled" else "disabled"));
+               else
+                  Put_Line (Standard_Error,
+                            "FAIL: the """ & Expected & """ button is "
+                            & (if Enabled_State
+                               then "enabled" else "disabled"));
+                  Failed := True;
+               end if;
+            end Check_Button_State_Atspi;
+
+            procedure Do_Press_Atspi (Expected : String) is
+            begin
+               if Guiverb_ATSPI.Press_Button (Expected) then
+                  Put_Line ("OK: the """ & Expected
+                            & """ button is pressed");
+               else
+                  Put_Line (Standard_Error,
+                            "FAIL: there is no button named """
+                            & Expected & """ to press, or the action"
+                            & " failed");
+                  Failed := True;
+               end if;
+            end Do_Press_Atspi;
 
             type Condition is access function return Boolean;
 
@@ -720,7 +781,7 @@ begin
                           ("next step: Then the window contains `"
                            & To_String (Current.Name) & "`");
                         if Backend = GTK then
-                           Fail_Unsupported ("the window contains ...");
+                           Check_Contains_Atspi (To_String (Current.Name));
                         else
                            Check_Contains (To_String (Current.Name));
                         end if;
@@ -729,7 +790,7 @@ begin
                           ("next step: And there is a button named `"
                            & To_String (Current.Name) & "`");
                         if Backend = GTK then
-                           Fail_Unsupported ("named button lookup");
+                           Check_Button_Atspi (To_String (Current.Name));
                         else
                            Check_Button (To_String (Current.Name));
                         end if;
@@ -743,7 +804,8 @@ begin
                                     Guiverb_Scenario.Button_Enabled_Step
                               then "enabled" else "disabled"));
                         if Backend = GTK then
-                           Fail_Unsupported ("the button enabled state");
+                           Check_Button_State_Atspi
+                             (To_String (Current.Name), Current.Kind);
                         else
                            Check_Button_State
                              (To_String (Current.Name), Current.Kind);
@@ -753,7 +815,7 @@ begin
                           ("next step: When I press the `"
                            & To_String (Current.Name) & "` button");
                         if Backend = GTK then
-                           Fail_Unsupported ("button press");
+                           Do_Press_Atspi (To_String (Current.Name));
                         else
                            Do_Press (To_String (Current.Name));
                         end if;
