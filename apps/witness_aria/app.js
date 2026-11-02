@@ -1,3 +1,9 @@
+// -----------------------------------------------------------------------------
+// GuiVerb (https://github.com/LionelDraghi/GuiVerb)
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2026, Lionel Draghi
+// -----------------------------------------------------------------------------
+
 //  ARIA practices witness: disclosure pattern (Authoring Practices).
 //  The button toggles aria-expanded and the visibility of the region
 //  it controls; no other framework, no other dependency.
