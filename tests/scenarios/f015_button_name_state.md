@@ -1,17 +1,16 @@
-# F015 — Button by accessible name, with enabled state (witness application)
+# F015 — Button by accessible name, with enabled state
 
 | Feature | Scenario in the feature page |
 |---|---|
 | F015 | Welcome button |
 
 Executable scenario of `docs/proposed/f015_button_name_state.md`,
-run with the GuiVerb runner:
+run with the GuiVerb runner (`make f015`); the wrapper `witness`
+selects the application instance.
 
-```sh
-bin/guiverb tests/scenarios/f015_button_name_state.md
-```
+## Scenario: Welcome button
 
-- When I run `witness_web`
+- When I run `witness`
 - Then a window appears
 - And there is a button named `Continue`
 - And the `Continue` button is enabled

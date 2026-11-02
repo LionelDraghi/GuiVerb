@@ -41,6 +41,11 @@ package Guiverb_WebDriver is
    --  The enabled state of the element: user-visible state, not an
    --  attribute value (F015).
 
+   procedure Click (Session_Id : String; Element_Id : String);
+   --  The press action on the Web backend (F020): the element's
+   --  default action, injected as real input events; scenario
+   --  vocabulary stays "press".
+
    procedure Delete_Session (Session_Id : String);
 
 end Guiverb_WebDriver;

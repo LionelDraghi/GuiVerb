@@ -1,16 +1,15 @@
-# F010 — Text content of a window (witness application)
+# F010 — Text content of a window
 
 | Feature | Scenario in the feature page |
 |---|---|
 | F010 | Welcome text |
 
 Executable scenario of `docs/proposed/f010_window_text_content.md`,
-run with the GuiVerb runner:
+run with the GuiVerb runner (`make f010`); the wrapper `witness`
+selects the application instance.
 
-```sh
-bin/guiverb tests/scenarios/f010_window_text_content.md
-```
+## Scenario: Welcome text
 
-- When I run `witness_web`
+- When I run `witness`
 - Then a window appears
 - And the window contains `Hello World`

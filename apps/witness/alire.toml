@@ -1,0 +1,21 @@
+name = "guiverb_witness"
+description = "GuiVerb reference application (GTK4 + Web projections)"
+version = "0.1.0-dev"
+
+authors = ["Lionel Draghi"]
+maintainers = ["Lionel Draghi <lionel.draghi@free.fr>"]
+maintainers-logins = ["LionelDraghi"]
+licenses = "MIT OR Apache-2.0 WITH LLVM-exception"
+website = "https://github.com/LionelDraghi/GuiVerb"
+tags = ["gui", "gtk", "test"]
+
+executables = ["witness"]
+
+[configuration]
+generate_C = false
+
+[[depends-on]]
+gtkada4 = "^27.0.0"
+
+[[pins]]
+gtkada4 = { url='https://github.com/AdaCore/gtkada' }

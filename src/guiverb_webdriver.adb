@@ -353,6 +353,19 @@ package body Guiverb_WebDriver is
       return Value_Of (To_String (Response), "value") = "true";
    end Enabled;
 
+   procedure Click (Session_Id : String; Element_Id : String) is
+      Status   : Natural;
+      Response : Unbounded_String;
+   begin
+      HTTP ("POST",
+            "/session/" & Session_Id & "/element/" & Element_Id & "/click",
+            "{}", Status, Response);
+      if Status not in 200 | 201 then
+         raise Request_Failed
+         with "press action failed (status" & Status'Image & ")";
+      end if;
+   end Click;
+
    procedure Delete_Session (Session_Id : String) is
       Status   : Natural;
       Response : Unbounded_String;

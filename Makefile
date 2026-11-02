@@ -9,7 +9,7 @@
 
 .SILENT:
 
-.PHONY: help build release check step clean
+.PHONY: help build release check gtk step clean
 
 help:
 	echo "Usage: make [target]"
@@ -17,10 +17,21 @@ help:
 	echo "Targets:"
 	echo "  build    : build guiverb in validation mode (warnings are errors)"
 	echo "  release  : build guiverb in release mode"
-	echo "  check    : run the test suites (bbt scenarios in tests/)"
-	echo "  f005 ... : replay one scenario by id, e.g. make f005"
-	echo "  step     : interactive step-by-step replay of one scenario,"
-	echo "             e.g. make step STEP=f005 (the browser is displayed)"
+	echo "  check    : run the shared scenario suite (tests/scenarios/),"
+	echo "             with the guiverb runner (default: web backend,"
+	echo "             default app witness_web)"
+	echo "  gtk      : build the reference application's GTK projection"
+	echo "             (apps/witness sub-crate)"
+	echo ""
+	echo "Backends   : select the observation chain with GUIVERB_BACKEND or"
+	echo "             --backend=web|gtk (default web). The application is"
+	echo "             resolved from the scenario name, in apps/<name>/ —"
+	echo "             Web: index.html; GTK: bin/<name>, run with"
+	echo "             GTK_A11Y=atspi (set by the backend)."
+	echo "  f005 ... : replay one feature's scenarios by id, e.g. make f020"
+	echo "  step     : interactive step-by-step replay, e.g. make step"
+	echo "             STEP=f005 for one scenario, bare make step for the"
+	echo "             whole suite (the browser is displayed)"
 	echo "  clean    : remove the build and test artifacts"
 	echo ""
 	echo "Headless   : the browser runs headless by default. To display it,"
@@ -43,31 +54,58 @@ release:
 
 check: build
 	echo "--- check"
-	bbt --cleanup=full tests/
+	@status=0; \
+	for f in tests/scenarios/*.md; do \
+	   echo ""; \
+	   echo "--- $$f"; \
+	   bin/guiverb "$$f" || status=1; \
+	done; \
+	if [ $$status -ne 0 ]; then \
+	   echo ""; \
+	   echo "check FAILED"; exit 1; \
+	fi; \
+	echo ""; \
+	echo "check OK"
 
-# Replay a single scenario by id, e.g. make f005 runs
-# bbt --cleanup=full on tests/f005_*.md
+# Build the GTK reference application (self-contained sub-crate with
+# its own dependencies and local make).
+gtk:
+	make -C apps/witness build
+
+# Replay every scenario of one feature, e.g. make f020 runs the f020
+# scenarios of all reference applications.
 f%: build
-	@f=`ls tests/$@_*.md 2>/dev/null | head -1`; \
-	if [ -z "$$f" ]; then \
-	   echo "no test file tests/$@_*.md"; exit 1; \
+	@status=0; found=0; \
+	for f in tests/scenarios/$@*.md; do \
+	   if [ ! -e "$$f" ]; then continue; fi; \
+	   found=1; \
+	   echo "--- $$f"; \
+	   bin/guiverb "$$f" || status=1; \
+	done; \
+	if [ $$found -eq 0 ]; then \
+	   echo "no scenario matching tests/scenarios/$@*.md"; exit 1; \
 	fi; \
-	bbt --cleanup=full "$$f"
+	if [ $$status -ne 0 ]; then echo "FAILED"; exit 1; fi
 
-# Interactive step-by-step replay of one scenario by id, e.g.
-# make step STEP=f005: guiverb shows each upcoming step and waits for
-# Enter before running it. The browser is displayed.
+# Interactive step-by-step replay: make step STEP=f005 replays one
+# scenario, bare make step replays the whole suite; guiverb shows each
+# upcoming step and waits for Enter before running it. The browser is
+# displayed.
 step: build
-	@if [ -z "$(STEP)" ]; then \
-	   echo "usage: make step STEP=<scenario id>, e.g. make step STEP=f005"; \
-	   exit 1; \
+	@if [ -n "$(STEP)" ]; then \
+	   f=`ls tests/scenarios/$(STEP)*.md 2>/dev/null | head -1`; \
+	   if [ -z "$$f" ]; then \
+	      echo "no scenario matching tests/scenarios/$(STEP)*.md"; exit 1; \
+	   fi; \
+	   echo "--- step-by-step replay of $$f (browser displayed)"; \
+	   GUIVERB_HEADED=1 bin/guiverb --step "$$f"; \
+	   exit $$?; \
 	fi; \
-	f=`ls tests/scenarios/$(STEP)*.md 2>/dev/null | head -1`; \
-	if [ -z "$$f" ]; then \
-	   echo "no scenario matching tests/scenarios/$(STEP)*.md"; exit 1; \
-	fi; \
-	echo "--- step-by-step replay of $$f (browser displayed)"; \
-	GUIVERB_HEADED=1 bin/guiverb --step "$$f"
+	echo "--- step-by-step replay of the whole suite (browser displayed)"; \
+	for f in tests/scenarios/*.md; do \
+	   echo ""; echo "--- $$f"; \
+	   GUIVERB_HEADED=1 bin/guiverb --step "$$f" || exit 1; \
+	done
 
 clean:
 	echo "--- clean"

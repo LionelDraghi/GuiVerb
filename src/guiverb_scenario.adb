@@ -42,8 +42,15 @@ package body Guiverb_Scenario is
    end Backticked;
 
    function Parse (File_Name : String) return Parsed is
-      File    : Ada.Text_IO.File_Type;
-      Result  : Parsed;
+      File   : Ada.Text_IO.File_Type;
+      Result : Parsed;
+
+      procedure Add_Step (Kind : Step_Kind; Name : String := "") is
+      begin
+         Result.Steps.Append
+           ((Kind => Kind, Name => To_Unbounded_String (Name)));
+      end Add_Step;
+
    begin
       Ada.Text_IO.Open (File, Ada.Text_IO.In_File, File_Name);
       while not Ada.Text_IO.End_Of_File (File) loop
@@ -66,10 +73,8 @@ package body Guiverb_Scenario is
                      Result.App_Name := To_Unbounded_String (Name);
                   end;
                elsif Line = "- Then a window appears" then
-                  Result.Has_Window := True;
-               elsif Line'Length >= 21
-                 and then Line (Line'First .. Line'First + 20)
-                            = "- Then a window named"
+                  Add_Step (Window_Step);
+               elsif Ada.Strings.Fixed.Index (Line, "a window named") > 0
                then
                   declare
                      Name : constant String := Backticked (Line);
@@ -78,8 +83,18 @@ package body Guiverb_Scenario is
                         raise Parse_Error
                         with "named window step without name: " & Line;
                      end if;
-                     Result.Has_Window := True;
-                     Result.Window_Name := To_Unbounded_String (Name);
+                     Add_Step (Window_Step, Name);
+                  end;
+               elsif Ada.Strings.Fixed.Index (Line, "the window contains") > 0
+               then
+                  declare
+                     Text : constant String := Backticked (Line);
+                  begin
+                     if Text = "" then
+                        raise Parse_Error
+                        with "window text step without text: " & Line;
+                     end if;
+                     Add_Step (Contains_Step, Text);
                   end;
                elsif Ada.Strings.Fixed.Index
                        (Line, "there is a button named") > 0
@@ -90,15 +105,10 @@ package body Guiverb_Scenario is
                      if Name = "" then
                         raise Parse_Error
                         with "button step without name: " & Line;
-                     elsif Result.Button_Name /= Null_Unbounded_String then
-                        raise Parse_Error
-                        with "two button steps in one scenario";
                      end if;
-                     Result.Button_Name := To_Unbounded_String (Name);
+                     Add_Step (Button_Step, Name);
                   end;
                elsif Ada.Strings.Fixed.Index (Line, "button is enabled") > 0
-                     or else Ada.Strings.Fixed.Index
-                               (Line, "button is disabled") > 0
                then
                   declare
                      Name : constant String := Backticked (Line);
@@ -107,32 +117,29 @@ package body Guiverb_Scenario is
                         raise Parse_Error
                         with "button state step without name: " & Line;
                      end if;
-                     if Result.Button_Name /= Null_Unbounded_String
-                       and then To_String (Result.Button_Name) /= Name
-                     then
-                        raise Parse_Error
-                        with "button state step on another button: " & Line;
-                     end if;
-                     Result.Button_Name := To_Unbounded_String (Name);
-                     Result.Button_Enabled :=
-                       (if Ada.Strings.Fixed.Index
-                              (Line, "button is disabled") > 0
-                        then Asserted_Disabled
-                        else Asserted_Enabled);
+                     Add_Step (Button_Enabled_Step, Name);
                   end;
-               elsif Ada.Strings.Fixed.Index (Line, "the window contains") > 0
+               elsif Ada.Strings.Fixed.Index (Line, "button is disabled") > 0
                then
                   declare
-                     Text : constant String := Backticked (Line);
+                     Name : constant String := Backticked (Line);
                   begin
-                     if Text = "" then
+                     if Name = "" then
                         raise Parse_Error
-                        with "window text step without text: " & Line;
-                     elsif Result.Window_Text /= Null_Unbounded_String then
-                        raise Parse_Error
-                        with "two window text steps in one scenario";
+                        with "button state step without name: " & Line;
                      end if;
-                     Result.Window_Text := To_Unbounded_String (Text);
+                     Add_Step (Button_Disabled_Step, Name);
+                  end;
+               elsif Ada.Strings.Fixed.Index (Line, "I press the") > 0
+               then
+                  declare
+                     Name : constant String := Backticked (Line);
+                  begin
+                     if Name = "" then
+                        raise Parse_Error
+                        with "press step without name: " & Line;
+                     end if;
+                     Add_Step (Press_Step, Name);
                   end;
                else
                   if Line'Length >= 2
@@ -148,7 +155,8 @@ package body Guiverb_Scenario is
       end loop;
       Ada.Text_IO.Close (File);
 
-      if Result.App_Name = Null_Unbounded_String or else not Result.Has_Window
+      if Result.App_Name = Null_Unbounded_String
+        or else not (for some S of Result.Steps => S.Kind = Window_Step)
       then
          raise Parse_Error
          with "scenario needs a run step and a window assertion";

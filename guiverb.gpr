@@ -21,6 +21,17 @@ project Guiverb is
       for Switches ("Ada") use ("-Es"); --  Symbolic traceback
    end Binder;
 
+   --  The GTK/AT-SPI backend binds the system libraries directly; on
+   --  the Web backend, the same linked binary simply never calls them.
+
+   package Linker is
+      --  -l:libatspi.so.0: libatspi2.0-dev is not installed, so there
+      --  is no libatspi.so dev symlink; the GNU ld "-l:" form links
+      --  the runtime library directly.
+      for Switches ("Ada")
+        use ("-l:libatspi.so.0", "-lgobject-2.0", "-lglib-2.0");
+   end Linker;
+
    package Install is
       for Artifacts (".") use ("share");
    end Install;

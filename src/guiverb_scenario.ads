@@ -4,30 +4,41 @@
 --  SPDX-FileCopyrightText: 2026, Lionel Draghi
 --  ---------------------------------------------------------------------------
 
+with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 
 package Guiverb_Scenario is
 
-   --  Minimal scenario parser for the first milestone: recognizes the
-   --  steps needed by F005 (launch, window observation) only.
+   --  Scenario parser: recognizes the steps implemented to date and
+   --  returns them in file order. A step not supported by this build
+   --  is a parse error, never silently ignored.
 
    Parse_Error : exception;
 
-   type Enabled_Assertion is (None, Asserted_Enabled, Asserted_Disabled);
+   type Step_Kind is
+     (Run_Step,             --  When I run <app>
+      Window_Step,          --  Then a window [named <name>] appears
+      Contains_Step,        --  the window contains <text>
+      Button_Step,          --  there is a button named <name>
+      Button_Enabled_Step,  --  the <name> button is enabled
+      Button_Disabled_Step, --  the <name> button is disabled
+      Press_Step);          --  When I press the <name> button
+
+   type Step is record
+      Kind : Step_Kind;
+      Name : Ada.Strings.Unbounded.Unbounded_String;
+      --  The step's backticked parameter; empty for the unnamed
+      --  "a window appears" variant.
+   end record;
+
+   package Step_Lists is new Ada.Containers.Vectors
+     (Index_Type => Positive, Element_Type => Step);
 
    type Parsed is record
-      App_Name    : Ada.Strings.Unbounded.Unbounded_String;
-      Window_Name : Ada.Strings.Unbounded.Unbounded_String :=
-        Ada.Strings.Unbounded.Null_Unbounded_String;
-      --  Empty means the "a window appears" unnamed variant.
-      Window_Text : Ada.Strings.Unbounded.Unbounded_String :=
-        Ada.Strings.Unbounded.Null_Unbounded_String;
-      --  Empty means no "the window contains" text assertion (F010).
-      Button_Name : Ada.Strings.Unbounded.Unbounded_String :=
-        Ada.Strings.Unbounded.Null_Unbounded_String;
-      --  Empty means no button lookup (F015).
-      Button_Enabled : Enabled_Assertion := None;
-      Has_Window  : Boolean := False;
+      App_Name : Ada.Strings.Unbounded.Unbounded_String;
+      --  From the run step; the launch happens before any other step.
+      Steps : Step_Lists.Vector;
+      --  The steps in file order, run step excluded.
    end record;
 
    function Parse (File_Name : String) return Parsed;
