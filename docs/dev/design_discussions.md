@@ -11,7 +11,7 @@ material risk.
 | Web driver for the minimal loop | Accepted | 2026-10-30 |
 | Application resolution and server applications | Accepted | 2026-11-02 |
 | GTK enabled state and window text over AT-SPI | Accepted | 2026-11-02 |
-| <title> | Discussing | YYYY-MM-DD |
+
 
 Statuses: Discussing | Accepted | Rejected | Superseded.
 
