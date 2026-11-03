@@ -15,6 +15,7 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Guiverb_Scenario;
 with Guiverb_WebDriver;
 with Guiverb_ATSPI;
+with Guiverb_AdiMCP;
 
 procedure Guiverb is
 
@@ -251,12 +252,14 @@ procedure Guiverb is
          return "";
    end Start_Server;
 
-   type Backend_Kind is (Web, GTK);
+   type Backend_Kind is (Web, GTK, Adi2);
 
    function Backend_Kind_Of (Text : String) return Backend_Kind is
    begin
       if Text = "gtk" or else Text = "GTK" then
          return GTK;
+      elsif Text = "adi2" or else Text = "Adi2" or else Text = "ADI2" then
+         return Adi2;
       else
          return Web;
       end if;
@@ -320,7 +323,8 @@ begin
       elsif Scenario_File /= Null_Unbounded_String then
          Put_Line
            (Standard_Error,
-            "usage: guiverb [--step] [--backend=web|gtk] <scenario-file>");
+            "usage: guiverb [--step] [--backend=web|gtk"
+            & "|adi2] <scenario-file>");
          Set_Exit_Status (Failure);
          return;
       else
@@ -331,7 +335,8 @@ begin
    if Scenario_File = Null_Unbounded_String then
       Put_Line
         (Standard_Error,
-         "usage: guiverb [--step] [--backend=web|gtk] <scenario-file>");
+         "usage: guiverb [--step] [--backend=web"
+         & "|gtk|adi2] <scenario-file>");
       Set_Exit_Status (Failure);
       return;
    end if;
@@ -363,13 +368,35 @@ begin
 
       if (Backend = Web and then Static_URL = ""
           and then Serve_Script = "")
-        or else (Backend = GTK and then Binary = "")
+        or else ((Backend = GTK or else Backend = Adi2)
+                 and then Binary = "")
       then
          Put_Line (Standard_Error, "no application '"
                    & To_String (Info.App_Name)
                    & "' found in an apps/ directory near " & File);
          Set_Exit_Status (Failure);
          return;
+      end if;
+
+      --  Adi2 scope gate: the probe session covers window observation
+      --  only (F005). A scenario carrying later features does not
+      --  launch the application to fail on the first unsupported
+      --  observation — the refusal comes before the launch, and the
+      --  reported gap is the conformance matrix status.
+
+      if Backend = Adi2 then
+         for C in Info.Steps.Iterate loop
+            if Info.Steps (C).Kind
+                 not in Guiverb_Scenario.Window_Step
+            then
+               Put_Line
+                 (Standard_Error,
+                  "FAIL: feature out of the Adi2 probe scope"
+                  & " (window observation only at this stage)");
+               Set_Exit_Status (Failure);
+               return;
+            end if;
+         end loop;
       end if;
 
       --  Backend-owned launch machinery (Q023 working position): the
@@ -386,6 +413,21 @@ begin
             Guiverb_ATSPI.Launch (Binary);
          exception
             when E : Guiverb_ATSPI.Launch_Failed =>
+               Put_Line (Standard_Error, "FAIL: " & Exception_Message (E));
+               Set_Exit_Status (Failure);
+               return;
+         end;
+      elsif Backend = Adi2 then
+         --  No environment to set: the probe is a build-profile
+         --  property of the application (Q023 working position —
+         --  probe activation stays the application's, not the
+         --  runner's). Launch fails clean when the binary is not a
+         --  probe-enabled build: the diagnostic names the missing
+         --  session, not a missing window.
+         begin
+            Guiverb_AdiMCP.Launch (Binary);
+         exception
+            when E : Guiverb_AdiMCP.Launch_Failed =>
                Put_Line (Standard_Error, "FAIL: " & Exception_Message (E));
                Set_Exit_Status (Failure);
                return;
@@ -475,6 +517,43 @@ begin
                   Failed := True;
                end if;
             end Check_Window_Atspi;
+
+            --  F005 on the Adi2 backend: the window check reads the
+            --  probe session's root snapshot (correlation by process
+            --  id, the bridge namespaces its session by it). A named
+            --  window check has no ground truth on this bridge: the
+            --  client refuses it (Probe_Unsupported), and the refusal
+            --  message is the F005 named-variant status — reported
+            --  red in the conformance matrix, never silently
+            --  degraded.
+            --  Rests on the eventually pattern? No: the AdiMCP
+            --  Window_Appears poll carries its own bounded deadline,
+            --  like the GTK backend's.
+
+            procedure Check_Window_Adi (Expected : String) is
+               Ok : Boolean;
+            begin
+               Ok := Guiverb_AdiMCP.Window_Appears (Expected);
+               if Ok then
+                  Put_Line ("OK: a window appears (Adi2 probe session "
+                            & "answers with a visible root)");
+               else
+                  Put_Line (Standard_Error,
+                            "FAIL: no window appears for this application"
+                            & (if Expected /= ""
+                               then " (no window titled """ & Expected
+                                    & """)"
+                               else "")
+                            & "; the last probe answer was: """
+                            & Preview (Guiverb_AdiMCP.Observed_Text)
+                            & """");
+                  Failed := True;
+               end if;
+            exception
+               when E : Guiverb_AdiMCP.Probe_Unsupported =>
+                  Put_Line (Standard_Error, "FAIL: " & Exception_Message (E));
+                  Failed := True;
+            end Check_Window_Adi;
             --  Fail_Unsupported stays for the GTK increments actually
             --  not implemented (F025 and on).
 
@@ -925,6 +1004,8 @@ begin
                                  & "` appears"));
                         if Backend = GTK then
                            Check_Window_Atspi (To_String (Current.Name));
+                        elsif Backend = Adi2 then
+                           Check_Window_Adi (To_String (Current.Name));
                         else
                            Check_Window (To_String (Current.Name));
                         end if;
@@ -1021,12 +1102,16 @@ begin
 
          Set_Exit_Status ((if Failed then Failure else Success));
          Wait_For_User
-           ("end of scenario: press Enter to close the browser");
+           ((if Backend = Web
+             then "end of scenario: press Enter to close the browser"
+             else "end of scenario: press Enter to close the application"));
          if Backend = Web then
             Guiverb_WebDriver.Delete_Session (Session_Id.all);
             GNAT.OS_Lib.Free (Session_Id);
             Stop_Driver;
             Stop_Server;
+         elsif Backend = Adi2 then
+            Guiverb_AdiMCP.Shutdown;
          else
             Guiverb_ATSPI.Shutdown;
          end if;
@@ -1034,6 +1119,8 @@ begin
          when E : Guiverb_WebDriver.Request_Failed
                 | Guiverb_WebDriver.Driver_Unreachable
                 | Guiverb_ATSPI.Launch_Failed
+                | Guiverb_AdiMCP.Launch_Failed
+                | Guiverb_AdiMCP.Probe_Unsupported
          =>
             Put_Line (Standard_Error, "FAIL: " & Exception_Message (E));
             if Backend = Web and then Session_Id /= null then
@@ -1046,6 +1133,8 @@ begin
             end if;
             if Backend = GTK then
                Guiverb_ATSPI.Shutdown;
+            elsif Backend = Adi2 then
+               Guiverb_AdiMCP.Shutdown;
             else
                Stop_Driver;
                Stop_Server;

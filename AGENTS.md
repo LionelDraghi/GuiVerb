@@ -74,6 +74,14 @@ matching the installed Chromium (see
 Set `GUIVERB_HEADED` (any value) to run the browser visibly instead
 of headless; scenarios must not depend on it.
 
+The Adi2 backend (`make check-adi2`) runs the witness's Adi2 probe
+projection (`apps/witness_adi2/`, Adi2 pinned at the audited commit —
+see its `alire.toml`) and speaks the development-only Adi2.MCP
+file-IPC bridge; window observation only at this stage
+(`docs/proposed/adi2_probe_audit.md` for the audit record). The
+GTK/AT-SPI chain is Linux-only (libatspi): the runner links it on
+POSIX only (`guiverb.gpr`, platform-conditional Linker switches).
+
 ## Project-specific paths or release parameters
 
 - `docs/dev/ci-strategy.md` is an additional maintainer document

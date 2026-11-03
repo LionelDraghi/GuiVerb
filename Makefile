@@ -9,7 +9,7 @@
 
 .SILENT:
 
-.PHONY: help build release check check-gtk check-gnoga gtk gnoga step clean
+.PHONY: help build release check check-gtk check-gnoga check-adi2 gtk gnoga adi2 step clean
 
 help:
 	echo "Usage: make [target]"
@@ -37,6 +37,12 @@ help:
 	echo "                (fails until F010-F020 have a GTK backend: red"
 	echo "                is the conformance matrix status, kept visible)"
 	echo "  check-gnoga : run the shared suite against the Gnoga projection"
+	echo "  adi2        : build the reference application's Adi2 probe"
+	echo "                projection (apps/witness_adi2 sub-crate,"
+	echo "                Adi2 pinned at the audited commit)"
+	echo "  check-adi2  : run the shared suite against the Adi2 probe"
+	echo "                projection (red by design: window observation"
+	echo "                only — the probe session's current scope)"
 	echo "  f005 ... : replay one feature's scenarios by id, e.g. make f020"
 	echo "  step     : interactive step-by-step replay, e.g. make step"
 	echo "             STEP=f005 for one scenario, bare make step for the"
@@ -94,6 +100,18 @@ check-gnoga: build gnoga
 
 gnoga:
 	make -C apps/witness_gnoga build
+
+# Build the Adi2 probe projection (self-contained sub-crate; depends
+# on Adi2 pinned at the audited commit — see its alire.toml).
+adi2:
+	make -C apps/witness_adi2 build
+
+# Run the shared suite against the Adi2 probe projection (same
+# scenarios, same vocabulary — S001). Expected red everywhere but F005:
+# the probe session covers window observation only (the reported gap
+# is the conformance matrix status).
+check-adi2: build adi2
+	GUIVERB_BACKEND=adi2 GUIVERB_APP=witness_adi2 $(MAKE) check
 
 # Replay every scenario of one feature, e.g. make f020 runs the f020
 # scenarios of all reference applications.

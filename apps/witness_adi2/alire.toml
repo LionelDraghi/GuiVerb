@@ -1,0 +1,26 @@
+name = "witness_adi2"
+description = "GuiVerb Adi2 probe witness application"
+version = "0.1.0-dev"
+
+authors = ["Lionel Draghi"]
+maintainers = ["Lionel Draghi <lionel.draghi@free.fr>"]
+maintainers-logins = ["LionelDraghi"]
+licenses = "Apache-2.0"
+
+executables = ["witness_adi2"]
+
+project-files = ["witness_adi2.gpr"]
+
+[[depends-on]]
+adi2 = "*"
+
+# The probe activation switch (see docs/proposed/adi2_probe_audit.md,
+# Activation model): development compiles Adi2's src/mcp (the
+# file-IPC introspection bridge); every other profile compiles the
+# documented no-op stub. Removing this table (or flipping the value)
+# produces the same application without the probe.
+[build-profiles]
+adi2 = "development"
+
+[[pins]]
+adi2 = { url = "https://github.com/ovenpasta/adi2", commit = "71f4635a3fcab9d5293df8e0cd9b4d53df44c602" }

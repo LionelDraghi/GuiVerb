@@ -22,14 +22,27 @@ project Guiverb is
    end Binder;
 
    --  The GTK/AT-SPI backend binds the system libraries directly; on
-   --  the Web backend, the same linked binary simply never calls them.
+   --  the Web backend, the same linked binary simply never calls
+   --  them. On Windows no libatspi exists to link against at all
+   --  (GTK/AT-SPI is a Linux/WSL chain), so the link is conditional
+   --  on the platform: the Web and Adi2 chains build everywhere.
+
+   OS_Kind := external ("OS", "linux");
+   Platform_Link_Switches := ();
+
+   case OS_Kind is
+      when "Windows_NT" =>
+         null;
+      when others =>
+         --  -l:libatspi.so.0: libatspi2.0-dev is not installed, so
+         --  there is no libatspi.so dev symlink; the GNU ld "-l:"
+         --  form links the runtime library directly.
+         Platform_Link_Switches :=
+           ("-l:libatspi.so.0", "-lgobject-2.0", "-lglib-2.0");
+   end case;
 
    package Linker is
-      --  -l:libatspi.so.0: libatspi2.0-dev is not installed, so there
-      --  is no libatspi.so dev symlink; the GNU ld "-l:" form links
-      --  the runtime library directly.
-      for Switches ("Ada")
-        use ("-l:libatspi.so.0", "-lgobject-2.0", "-lglib-2.0");
+      for Switches ("Ada") use Platform_Link_Switches;
    end Linker;
 
    package Install is
