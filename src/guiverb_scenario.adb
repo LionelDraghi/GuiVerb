@@ -203,11 +203,11 @@ package body Guiverb_Scenario is
       end loop;
       Ada.Text_IO.Close (File);
 
-      if Result.App_Name = Null_Unbounded_String
-        or else not (for some S of Result.Steps => S.Kind = Window_Step)
-      then
-         raise Parse_Error
-         with "scenario needs a run step and a window assertion";
+      --  One run step names the application the whole scenario drives;
+      --  the window assertion is a step like any other, not a
+      --  mandatory prefix (scenarios stay independent of each other).
+      if Result.App_Name = Null_Unbounded_String then
+         raise Parse_Error with "scenario needs a run step";
       end if;
       return Result;
    exception

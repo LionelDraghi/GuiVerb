@@ -2,6 +2,9 @@
 /bin/
 /alire/
 /config/
+#  Alire generates every crate's config at build time (root and the
+#  apps/ sub-repos alike); it never mattered in the index.
+apps/*/config/
 *.md.out
 *.md.err
 tests/run/

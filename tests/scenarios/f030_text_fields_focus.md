@@ -12,10 +12,7 @@ naming for password fields stays open (Q022).
 ## Scenario: Login fields
 
 - When I run `witness`
-- Then a window named `GuiVerb witness` appears
-- And there is a button named `Continue`
 - When I press the `Continue` button
-- Then a `Log in` dialog eventually appears
 - And the dialog contains a textbox named `User`
 - And the dialog contains a password textbox named `Password`
 - And the `User` textbox has focus

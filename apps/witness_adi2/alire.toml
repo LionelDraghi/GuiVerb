@@ -11,6 +11,9 @@ executables = ["witness_adi2"]
 
 project-files = ["witness_adi2.gpr"]
 
+[configuration]
+generate_C = false
+
 [[depends-on]]
 adi2 = "*"
 

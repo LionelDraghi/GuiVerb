@@ -11,6 +11,5 @@ selects the application instance.
 ## Scenario: Welcome button
 
 - When I run `witness`
-- Then a window appears
 - And there is a button named `Continue`
 - And the `Continue` button is enabled

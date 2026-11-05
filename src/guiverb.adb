@@ -378,27 +378,6 @@ begin
          return;
       end if;
 
-      --  Adi2 scope gate: the probe session covers window observation
-      --  only (F005). A scenario carrying later features does not
-      --  launch the application to fail on the first unsupported
-      --  observation — the refusal comes before the launch, and the
-      --  reported gap is the conformance matrix status.
-
-      if Backend = Adi2 then
-         for C in Info.Steps.Iterate loop
-            if Info.Steps (C).Kind
-                 not in Guiverb_Scenario.Window_Step
-            then
-               Put_Line
-                 (Standard_Error,
-                  "FAIL: feature out of the Adi2 probe scope"
-                  & " (window observation only at this stage)");
-               Set_Exit_Status (Failure);
-               return;
-            end if;
-         end loop;
-      end if;
-
       --  Backend-owned launch machinery (Q023 working position): the
       --  Web chain owns the driver; the GTK chain spawns the
       --  application binary directly — the spawned pid is the
@@ -521,19 +500,22 @@ begin
             --  F005 on the Adi2 backend: the window check reads the
             --  probe session's root snapshot (correlation by process
             --  id, the bridge namespaces its session by it). A named
-            --  window check has no ground truth on this bridge: the
-            --  client refuses it (Probe_Unsupported), and the refusal
-            --  message is the F005 named-variant status — reported
-            --  red in the conformance matrix, never silently
-            --  degraded.
+            --  window check grounds on the projection's title
+            --  declaration: the bridge exposes no SDL title bar, and
+            --  the root widget's declared label is the one
+            --  name-carrying channel it serializes — the witness
+            --  carries the window title there (mapping conventions
+            --  in Guiverb_AdiMCP). A projection that declares no
+            --  title fails the named check with the tree as
+            --  evidence, never a silently degraded pass.
             --  Rests on the eventually pattern? No: the AdiMCP
             --  Window_Appears poll carries its own bounded deadline,
             --  like the GTK backend's.
 
             procedure Check_Window_Adi (Expected : String) is
-               Ok : Boolean;
+               Ok : constant Boolean :=
+                 Guiverb_AdiMCP.Window_Appears (Expected);
             begin
-               Ok := Guiverb_AdiMCP.Window_Appears (Expected);
                if Ok then
                   Put_Line ("OK: a window appears (Adi2 probe session "
                             & "answers with a visible root)");
@@ -549,13 +531,7 @@ begin
                             & """");
                   Failed := True;
                end if;
-            exception
-               when E : Guiverb_AdiMCP.Probe_Unsupported =>
-                  Put_Line (Standard_Error, "FAIL: " & Exception_Message (E));
-                  Failed := True;
             end Check_Window_Adi;
-            --  Fail_Unsupported stays for the GTK increments actually
-            --  not implemented (F025 and on).
 
             procedure Check_Contains_Atspi (Expected : String) is
                Ok : constant Boolean :=
@@ -922,6 +898,131 @@ begin
                end if;
             end Check_Textbox_Focus_Atspi;
 
+            --  F010-F030 on the Adi2 backend: the bridge's queries and
+            --  actions, under the mapping conventions documented in
+            --  Guiverb_AdiMCP (text-as-name, the field named by its
+            --  following sibling, the projection's title declaration
+            --  for the named-window check, the serialized widget
+            --  state for focus). The failure texts mirror the GTK
+            --  ones; the diagnostic's evidence is the bridge's last
+            --  serialized answer.
+
+            procedure Check_Contains_Adi (Expected : String) is
+            begin
+               if Guiverb_AdiMCP.Window_Contains (Expected) then
+                  Put_Line ("OK: the window contains """
+                            & Expected & """");
+               else
+                  Put_Line (Standard_Error,
+                            "FAIL: the window does not contain """
+                            & Expected & """; the last probe answer is: """
+                            & Preview (Guiverb_AdiMCP.Observed_Text)
+                            & """");
+                  Failed := True;
+               end if;
+            end Check_Contains_Adi;
+
+            procedure Check_Button_Adi (Expected : String) is
+            begin
+               if Guiverb_AdiMCP.Button_Named (Expected) then
+                  Put_Line ("OK: there is a button named """
+                            & Expected & """");
+               else
+                  Put_Line (Standard_Error,
+                            "FAIL: there is no button named """
+                            & Expected & """");
+                  Failed := True;
+               end if;
+            end Check_Button_Adi;
+
+            procedure Check_Button_State_Adi
+              (Expected : String; Wanted : Guiverb_Scenario.Step_Kind)
+            is
+               Enabled_State : constant Boolean :=
+                 Guiverb_AdiMCP.Button_Enabled (Expected);
+            begin
+               if (Wanted = Guiverb_Scenario.Button_Enabled_Step)
+                    = Enabled_State
+               then
+                  Put_Line ("OK: the """ & Expected & """ button is "
+                            & (if Wanted = Guiverb_Scenario.Button_Enabled_Step
+                               then "enabled" else "disabled"));
+               else
+                  Put_Line (Standard_Error,
+                            "FAIL: the """ & Expected & """ button is "
+                            & (if Enabled_State
+                               then "enabled" else "disabled"));
+                  Failed := True;
+               end if;
+            end Check_Button_State_Adi;
+
+            procedure Do_Press_Adi (Expected : String) is
+            begin
+               if Guiverb_AdiMCP.Press_Button (Expected) then
+                  Put_Line ("OK: the """ & Expected
+                            & """ button is pressed");
+               else
+                  Put_Line (Standard_Error,
+                            "FAIL: there is no button named """
+                            & Expected & """ to press, or the action"
+                            & " failed");
+                  Failed := True;
+               end if;
+            end Do_Press_Adi;
+
+            procedure Check_Dialog_Adi (Expected : String) is
+            begin
+               if Guiverb_AdiMCP.Dialog_Appears (Expected) then
+                  Put_Line ("OK: a dialog named """ & Expected
+                            & """ appears");
+               else
+                  Put_Line (Standard_Error,
+                            "FAIL: no dialog named """ & Expected
+                            & """ appears before the deadline ("
+                            & Deadline_Text & " s); the last probe"
+                            & " answer is: """
+                            & Preview (Guiverb_AdiMCP.Observed_Text)
+                            & """");
+                  Failed := True;
+               end if;
+            end Check_Dialog_Adi;
+
+            procedure Check_Textbox_Adi
+              (Expected : String; Password : Boolean) is
+            begin
+               if Guiverb_AdiMCP.Field_Named (Expected, Password) then
+                  Put_Line ("OK: there is a "
+                            & (if Password
+                               then "password textbox"
+                               else "textbox")
+                            & " named """ & Expected & """");
+               else
+                  Put_Line (Standard_Error,
+                            "FAIL: no "
+                            & (if Password
+                               then "password textbox"
+                               else "textbox")
+                            & " named """ & Expected
+                            & """ appears before the deadline ("
+                            & Deadline_Text & " s)");
+                  Failed := True;
+               end if;
+            end Check_Textbox_Adi;
+
+            procedure Check_Textbox_Focus_Adi (Expected : String) is
+            begin
+               if Guiverb_AdiMCP.Field_Focused (Expected) then
+                  Put_Line ("OK: the """ & Expected
+                            & """ textbox has focus");
+               else
+                  Put_Line (Standard_Error,
+                            "FAIL: the """ & Expected
+                            & """ textbox has no focus (deadline "
+                            & Deadline_Text & " s)");
+                  Failed := True;
+               end if;
+            end Check_Textbox_Focus_Adi;
+
       begin
          if Backend = Web then
             --  A server application starts after the driver is ready;
@@ -1015,6 +1116,8 @@ begin
                            & To_String (Current.Name) & "`");
                         if Backend = GTK then
                            Check_Contains_Atspi (To_String (Current.Name));
+                        elsif Backend = Adi2 then
+                           Check_Contains_Adi (To_String (Current.Name));
                         else
                            Check_Contains (To_String (Current.Name));
                         end if;
@@ -1024,6 +1127,8 @@ begin
                            & To_String (Current.Name) & "`");
                         if Backend = GTK then
                            Check_Button_Atspi (To_String (Current.Name));
+                        elsif Backend = Adi2 then
+                           Check_Button_Adi (To_String (Current.Name));
                         else
                            Check_Button (To_String (Current.Name));
                         end if;
@@ -1039,6 +1144,9 @@ begin
                         if Backend = GTK then
                            Check_Button_State_Atspi
                              (To_String (Current.Name), Current.Kind);
+                        elsif Backend = Adi2 then
+                           Check_Button_State_Adi
+                             (To_String (Current.Name), Current.Kind);
                         else
                            Check_Button_State
                              (To_String (Current.Name), Current.Kind);
@@ -1049,6 +1157,8 @@ begin
                            & To_String (Current.Name) & "` button");
                         if Backend = GTK then
                            Do_Press_Atspi (To_String (Current.Name));
+                        elsif Backend = Adi2 then
+                           Do_Press_Adi (To_String (Current.Name));
                         else
                            Do_Press (To_String (Current.Name));
                         end if;
@@ -1059,6 +1169,8 @@ begin
                            & "` dialog eventually appears");
                         if Backend = GTK then
                            Check_Dialog_Atspi (To_String (Current.Name));
+                        elsif Backend = Adi2 then
+                           Check_Dialog_Adi (To_String (Current.Name));
                         else
                            Check_Dialog (To_String (Current.Name));
                         end if;
@@ -1068,6 +1180,9 @@ begin
                            & " named `" & To_String (Current.Name) & "`");
                         if Backend = GTK then
                            Check_Textbox_Atspi
+                             (To_String (Current.Name), False);
+                        elsif Backend = Adi2 then
+                           Check_Textbox_Adi
                              (To_String (Current.Name), False);
                         else
                            Check_Textbox (To_String (Current.Name), False);
@@ -1080,6 +1195,9 @@ begin
                         if Backend = GTK then
                            Check_Textbox_Atspi
                              (To_String (Current.Name), True);
+                        elsif Backend = Adi2 then
+                           Check_Textbox_Adi
+                             (To_String (Current.Name), True);
                         else
                            Check_Textbox (To_String (Current.Name), True);
                         end if;
@@ -1090,6 +1208,9 @@ begin
                            & "` textbox has focus");
                         if Backend = GTK then
                            Check_Textbox_Focus_Atspi
+                             (To_String (Current.Name));
+                        elsif Backend = Adi2 then
+                           Check_Textbox_Focus_Adi
                              (To_String (Current.Name));
                         else
                            Check_Textbox_Focus
@@ -1120,7 +1241,6 @@ begin
                 | Guiverb_WebDriver.Driver_Unreachable
                 | Guiverb_ATSPI.Launch_Failed
                 | Guiverb_AdiMCP.Launch_Failed
-                | Guiverb_AdiMCP.Probe_Unsupported
          =>
             Put_Line (Standard_Error, "FAIL: " & Exception_Message (E));
             if Backend = Web and then Session_Id /= null then

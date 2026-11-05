@@ -13,7 +13,5 @@ diagnostic. The login view opens on the press of `Continue`.
 ## Scenario: Continue to login
 
 - When I run `witness`
-- Then a window named `GuiVerb witness` appears
-- And there is a button named `Continue`
 - When I press the `Continue` button
 - Then a `Log in` dialog eventually appears
